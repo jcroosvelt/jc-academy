@@ -711,6 +711,7 @@ async function sbLoadCourses(){
   data.forEach(row => COURSES.push(mapDbCourse(row)));
 }
 
+let INITIAL_DATA_LOADED = false;
 async function sbLoadPublicContent(){
   await sbLoadCourses();
   const { data: content } = await sb.from('site_content').select('*');
@@ -746,6 +747,7 @@ async function sbLoadPublicContent(){
   const { data: products } = await sb.from('products').select('*').eq('status','publie').order('created_at', {ascending:false});
   if(products){ PRODUCTS.length = 0; products.forEach(p => PRODUCTS.push(mapDbProduct(p))); }
   await sbLoadTestimonials();
+  INITIAL_DATA_LOADED = true;
 }
 
 async function sbLoadTestimonials(){
@@ -961,6 +963,55 @@ function updateSEO(page){
   document.getElementById('ogDescription').setAttribute('content', meta.desc);
 }
 
+/* ===================== URL ROUTING (each page gets its own link) ===================== */
+const ROUTES = [
+  { page:'home', pattern:/^\/?$/, build:()=>'/' },
+  { page:'courses', pattern:/^\/cours\/?$/, build:()=>'/cours' },
+  { page:'course-detail', pattern:/^\/cours\/([^/]+)$/, build:(s)=>'/cours/'+s.courseId, parse:(m)=>({courseId:m[1]}) },
+  { page:'login', pattern:/^\/connexion\/?$/, build:()=>'/connexion' },
+  { page:'register', pattern:/^\/inscription\/?$/, build:()=>'/inscription' },
+  { page:'forgot-password', pattern:/^\/mot-de-passe-oublie\/?$/, build:()=>'/mot-de-passe-oublie' },
+  { page:'become-teacher', pattern:/^\/devenir-formateur\/?$/, build:()=>'/devenir-formateur' },
+  { page:'dashboard', pattern:/^\/tableau-de-bord\/?$/, build:()=>'/tableau-de-bord' },
+  { page:'teacher-dashboard', pattern:/^\/espace-formateur\/?$/, build:()=>'/espace-formateur' },
+  { page:'admin-dashboard', pattern:/^\/admin\/?$/, build:()=>'/admin' },
+  { page:'checkout', pattern:/^\/paiement\/([^/]+)$/, build:(s)=>'/paiement/'+s.courseId, parse:(m)=>({courseId:m[1]}) },
+  { page:'certificate-request', pattern:/^\/certificat\/([^/]+)$/, build:(s)=>'/certificat/'+s.courseId, parse:(m)=>({courseId:m[1]}) },
+  { page:'quiz', pattern:/^\/quiz\/([^/]+)\/([^/]+)$/, build:(s)=>'/quiz/'+s.courseId+'/'+s.moduleId, parse:(m)=>({courseId:m[1], moduleId:m[2]}) },
+  { page:'contact', pattern:/^\/contact\/?$/, build:()=>'/contact' },
+  { page:'about', pattern:/^\/a-propos\/?$/, build:()=>'/a-propos' },
+  { page:'instructors', pattern:/^\/formateurs\/?$/, build:()=>'/formateurs' },
+  { page:'instructor-profile', pattern:/^\/formateurs\/([^/]+)$/, build:(s)=>'/formateurs/'+encodeURIComponent(s.instructorName||''), parse:(m)=>({instructorName:decodeURIComponent(m[1])}) },
+  { page:'article-detail', pattern:/^\/articles\/([^/]+)$/, build:(s)=>'/articles/'+s.articleId, parse:(m)=>({articleId:m[1]}) },
+  { page:'product-checkout', pattern:/^\/produits\/([^/]+)\/paiement$/, build:(s)=>'/produits/'+s.productId+'/paiement', parse:(m)=>({productId:m[1]}) },
+  { page:'product-detail', pattern:/^\/produits\/([^/]+)$/, build:(s)=>'/produits/'+s.productId, parse:(m)=>({productId:m[1]}) },
+  { page:'products', pattern:/^\/produits\/?$/, build:()=>'/produits' },
+  { page:'404', pattern:/^\/404\/?$/, build:()=>'/404' },
+];
+function buildHashForPage(page, s){
+  const r = ROUTES.find(r=>r.page===page);
+  if(!r) return '/';
+  try { return r.build(s); } catch(e){ return '/'; }
+}
+function parseCurrentHash(){
+  const raw = window.location.hash || '';
+  // If Supabase put auth tokens in the hash (email confirmation / password recovery), never treat it as a route
+  if(raw.includes('access_token=') || raw.includes('type=recovery') || raw.includes('type=signup') || raw.includes('error=')) return null;
+  const path = raw.replace(/^#/, '') || '/';
+  for(const r of ROUTES){
+    const m = path.match(r.pattern);
+    if(m) return { page: r.page, opts: r.parse ? r.parse(m) : {} };
+  }
+  return { page:'404', opts:{} };
+}
+let SUPPRESS_HASH_SYNC = false;
+window.addEventListener('hashchange', function(){
+  if(SUPPRESS_HASH_SYNC) return;
+  const route = parseCurrentHash();
+  if(!route) return;
+  go(route.page, route.opts);
+});
+
 const ROUTE_ROLES = {
   'dashboard': ['student','teacher','admin'], // any logged-in user can see their own student view
   'teacher-dashboard': ['teacher','admin'],
@@ -981,6 +1032,12 @@ function go(page, opts={}){
   window.scrollTo({top:0, behavior:'instant'});
   updateSEO(page);
   render();
+  const newHash = '#' + buildHashForPage(page, state);
+  if(window.location.hash !== newHash){
+    SUPPRESS_HASH_SYNC = true;
+    window.location.hash = newHash;
+    setTimeout(()=>{ SUPPRESS_HASH_SYNC = false; }, 0);
+  }
   if(state.loggedIn && CURRENT_PROFILE && ['dashboard','checkout','course-detail','certificate-request'].includes(page)){
     loadStudentData().then(render);
   }
@@ -1652,7 +1709,7 @@ async function markVideoWatched(courseId, moduleDbId, videoUrl){
 
 function renderCourseDetail(){
   const c = COURSES.find(x=>x.id===state.courseId) || COURSES[0];
-  if(!c){ return render404(); }
+  if(!c){ return renderLoadingOr404(); }
   const hasRealModules = c.modules && c.modules.length>0;
   const modules = hasRealModules ? c.modules.map((m,idx)=>{
     const prog = CURRENT_MODULE_PROGRESS[m.id] || {};
@@ -2556,10 +2613,17 @@ function render404(){
     </div>
   </div>`;
 }
+function renderLoadingOr404(){
+  if(!INITIAL_DATA_LOADED){
+    return `<div class="error-page"><div class="spinner" style="width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;"></div><style>@keyframes spin{to{transform:rotate(360deg);}}</style><p class="small-muted" style="margin-top:16px;">Chargement...</p></div>`;
+  }
+  return render404();
+}
 
 /* ===================== INSTRUCTOR PROFILE (PUBLIC) ===================== */
 function renderInstructorProfile(){
-  const instr = INSTRUCTORS.find(i=>i.name===state.instructorName) || INSTRUCTORS[0];
+  const instr = INSTRUCTORS.find(i=>i.name===state.instructorName);
+  if(!instr) return renderLoadingOr404();
   const taught = COURSES.filter(c=>c.instructor===instr.name);
   const idx = INSTRUCTORS.indexOf(instr);
   return `
@@ -2613,8 +2677,8 @@ function renderAllInstructorsPage(){
 
 /* ===================== ARTICLE DETAIL ===================== */
 function renderArticleDetail(){
-  const a = ARTICLES.find(x=>x.id===state.articleId) || ARTICLES[0];
-  if(!a) return render404();
+  const a = ARTICLES.find(x=>x.id===state.articleId);
+  if(!a) return renderLoadingOr404();
   return `
   <div class="container" style="padding:44px 24px 70px;max-width:760px;">
     <a href="#" onclick="go('home');return false;" style="font-size:13px;color:var(--text-muted);">&larr; Retour à l'accueil</a>
@@ -3410,7 +3474,7 @@ function renderProducts(){
 
 function renderProductDetail(){
   const p = PRODUCTS.find(x=>x.id===state.productId);
-  if(!p) return render404();
+  if(!p) return renderLoadingOr404();
   return `
   <section class="course-hero">
     <div class="container course-hero-grid">
@@ -3452,7 +3516,7 @@ function renderProductDetail(){
 
 function renderProductCheckout(){
   const p = PRODUCTS.find(x=>x.id===state.productId);
-  if(!p) return render404();
+  if(!p) return renderLoadingOr404();
   const currency = state.payCurrency || 'htg';
   return `
   <div class="container" style="padding:44px 24px 70px;">
@@ -3549,6 +3613,11 @@ function renderApp(){
 }
 
 function render(){ renderApp(); renderCookieBanner(); }
+const initialRoute = parseCurrentHash();
+if(initialRoute){
+  state.page = initialRoute.page;
+  Object.assign(state, initialRoute.opts);
+}
 updateSEO(state.page);
 render(); // initial paint (seed placeholders) while we fetch live data
 sbRestoreSession(); // then swap in real session + live courses/content from Supabase
