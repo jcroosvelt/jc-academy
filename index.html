@@ -848,7 +848,7 @@ let REVIEWS = {};
 const DEFAULT_REVIEWS = [];
 
 let SITE_CONTENT = {
-  motto: "Learn. Lead. Inspire.",
+  motto: "Learn. Lead. Inspire",
   heroEyebrow: "Plateforme de formation certifiante",
   heroTitle: "Apprenez de nouvelles compétences,",
   heroTitleAccent: "obtenez une certification reconnue.",
@@ -1245,7 +1245,7 @@ function renderNavbar(){
         <button class="btn btn-outline btn-sm" onclick="go('login')">Se connecter</button>
         <button class="btn btn-primary btn-sm" onclick="go('register')">S'inscrire</button>`;
   document.getElementById('navbar-root').innerHTML = `
-  <div class="topbar">✦ ${SITE_CONTENT.motto.toUpperCase()} ✦</div>
+  <div class="topbar">${SITE_CONTENT.motto.toUpperCase()}</div>
   <header class="navbar">
     <div class="container navbar-inner">
       <a href="#" class="brand" onclick="go('home');return false;">
@@ -1255,7 +1255,7 @@ function renderNavbar(){
       <nav class="nav-links" id="navLinks">
         ${links.map(l=>`<a href="#" class="${state.page===l.id?'active':''}" onclick="go('${l.id}');return false;">${l.label}</a>`).join('')}
         ${state.loggedIn?`<a href="#" class="${state.page==='dashboard'?'active':''}" onclick="go('dashboard');return false;">Mon espace</a>`:''}
-        <div class="mobile-auth-row" style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+        <div class="mobile-auth-row" style="gap:10px;margin-top:8px;flex-wrap:wrap;">
           ${state.loggedIn ? `<button class="btn btn-outline btn-sm" onclick="go('dashboard')">Mon espace</button>` : `<button class="btn btn-outline btn-sm" onclick="go('login')">Se connecter</button><button class="btn btn-primary btn-sm" onclick="go('register')">S'inscrire</button>`}
         </div>
       </nav>
