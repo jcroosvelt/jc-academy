@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://VOTRE-DOMAINE.vercel.app/sitemap.xml
+Sitemap: https://jc-academy.vercel.app/sitemap.xml
