@@ -495,8 +495,8 @@ footer a:hover{color:var(--gold);}
 .small-muted{font-size:12.5px;color:var(--text-muted);}
 
 /* ===== Dashboard ===== */
-.dash-shell{display:grid;grid-template-columns:250px 1fr;min-height:calc(100vh - 200px);}
-@media (max-width:860px){.dash-shell{grid-template-columns:1fr;}}
+.dash-shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:calc(100vh - 200px);}
+@media (max-width:860px){.dash-shell{grid-template-columns:minmax(0,1fr);}}
 .dash-sidebar{background:var(--surface);border-right:1px solid var(--border);padding:28px 18px;}
 @media (max-width:860px){.dash-sidebar{border-right:none;border-bottom:1px solid var(--border);padding:14px 14px 10px;}}
 .dash-user{display:flex;align-items:center;gap:12px;padding:0 8px 20px;margin-bottom:16px;border-bottom:1px solid var(--border);}
@@ -513,7 +513,7 @@ footer a:hover{color:var(--gold);}
 .dash-nav a:hover{background:#fff;}
 .dash-nav a.active{background:var(--navy);color:#fff;}
 .dash-nav .logout{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);color:#B23B3B;}
-.dash-main{padding:32px;background:#fff;}
+.dash-main{padding:32px;background:#fff;min-width:0;overflow-x:hidden;}
 @media (max-width:860px){.dash-main{padding:22px;}}
 .dash-welcome{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);border-radius:16px;padding:26px 28px;color:#fff;margin-bottom:28px;position:relative;overflow:hidden;}
 .dash-welcome::after{content:"";position:absolute;right:-30px;top:-30px;width:150px;height:150px;background:var(--gold);opacity:.18;clip-path:polygon(50% 0,100% 100%,0 100%);}
@@ -988,28 +988,26 @@ const ROUTES = [
   { page:'products', pattern:/^\/produits\/?$/, build:()=>'/produits' },
   { page:'404', pattern:/^\/404\/?$/, build:()=>'/404' },
 ];
-function buildHashForPage(page, s){
+function buildPathForPage(page, s){
   const r = ROUTES.find(r=>r.page===page);
   if(!r) return '/';
   try { return r.build(s); } catch(e){ return '/'; }
 }
-function parseCurrentHash(){
-  const raw = window.location.hash || '';
-  // If Supabase put auth tokens in the hash (email confirmation / password recovery), never treat it as a route
-  if(raw.includes('access_token=') || raw.includes('type=recovery') || raw.includes('type=signup') || raw.includes('error=')) return null;
-  const path = raw.replace(/^#/, '') || '/';
+function parseCurrentPath(){
+  const path = window.location.pathname || '/';
   for(const r of ROUTES){
     const m = path.match(r.pattern);
     if(m) return { page: r.page, opts: r.parse ? r.parse(m) : {} };
   }
   return { page:'404', opts:{} };
 }
-let SUPPRESS_HASH_SYNC = false;
-window.addEventListener('hashchange', function(){
-  if(SUPPRESS_HASH_SYNC) return;
-  const route = parseCurrentHash();
+let SKIP_PUSH_STATE = false;
+window.addEventListener('popstate', function(){
+  const route = parseCurrentPath();
   if(!route) return;
+  SKIP_PUSH_STATE = true;
   go(route.page, route.opts);
+  SKIP_PUSH_STATE = false;
 });
 
 const ROUTE_ROLES = {
@@ -1032,11 +1030,11 @@ function go(page, opts={}){
   window.scrollTo({top:0, behavior:'instant'});
   updateSEO(page);
   render();
-  const newHash = '#' + buildHashForPage(page, state);
-  if(window.location.hash !== newHash){
-    SUPPRESS_HASH_SYNC = true;
-    window.location.hash = newHash;
-    setTimeout(()=>{ SUPPRESS_HASH_SYNC = false; }, 0);
+  if(!SKIP_PUSH_STATE){
+    const newPath = buildPathForPage(page, state);
+    if(window.location.pathname !== newPath){
+      history.pushState({page, opts}, '', newPath);
+    }
   }
   if(state.loggedIn && CURRENT_PROFILE && ['dashboard','checkout','course-detail','certificate-request'].includes(page)){
     loadStudentData().then(render);
@@ -2206,7 +2204,7 @@ function renderDashboard(){
           <div class="dash-stat-card"><b>${enrolledCourses.length}</b><span>Cours inscrits</span></div>
           <div class="dash-stat-card"><b>${completed.length}</b><span>Cours terminés</span></div>
           <div class="dash-stat-card"><b>${completed.length}</b><span>Certificats obtenus</span></div>
-          <div class="dash-stat-card"><b>${Math.round(enrolledCourses.reduce((a,c)=>a+c.progress,0)/enrolledCourses.length)}%</b><span>Progression moyenne</span></div>
+          <div class="dash-stat-card"><b>${enrolledCourses.length ? Math.round(enrolledCourses.reduce((a,c)=>a+c.progress,0)/enrolledCourses.length) : 0}%</b><span>Progression moyenne</span></div>
         </div>
 
         <h3 style="font-size:17px;margin-bottom:14px;">Reprendre où vous en étiez</h3>
@@ -2993,7 +2991,7 @@ function renderAdminDashboard(){
         <div class="dash-welcome"><h2>Tableau de bord Administrateur</h2><p>Vue d'ensemble de la plateforme JC Academy.</p></div>
         <div class="dash-stats">
           <div class="dash-stat-card"><b>${COURSES.length}</b><span>Cours publiés</span></div>
-          <div class="dash-stat-card"><b>50 240</b><span>Étudiants</span></div>
+          <div class="dash-stat-card"><b>${ADMIN_USERS.filter(u=>u.role==='Étudiant').length}</b><span>Étudiants</span></div>
           <div class="dash-stat-card"><b>${INSTRUCTORS.length}</b><span>Formateurs actifs</span></div>
           <div class="dash-stat-card"><b>${ARTICLES.length}</b><span>Articles publiés</span></div>
         </div>
@@ -3613,7 +3611,7 @@ function renderApp(){
 }
 
 function render(){ renderApp(); renderCookieBanner(); }
-const initialRoute = parseCurrentHash();
+const initialRoute = parseCurrentPath();
 if(initialRoute){
   state.page = initialRoute.page;
   Object.assign(state, initialRoute.opts);
