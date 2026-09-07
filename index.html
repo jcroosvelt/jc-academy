@@ -214,6 +214,21 @@ img{max-width:100%;display:block;}
 
 /* image upload */
 .upload-box{border:1.5px dashed var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:var(--surface);}
+
+/* rich text editor */
+.rte-toolbar{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface);border:1.5px solid var(--border);border-bottom:none;border-radius:10px 10px 0 0;padding:8px;}
+.rte-toolbar select{padding:6px 8px;border-radius:6px;border:1px solid var(--border);font-size:12.5px;background:#fff;}
+.rte-toolbar button{width:32px;height:32px;border-radius:6px;border:1px solid var(--border);background:#fff;font-size:13px;cursor:pointer;}
+.rte-toolbar button:hover{background:var(--navy-soft);}
+.rte-toolbar input[type="color"]{width:32px;height:32px;padding:2px;border-radius:6px;border:1px solid var(--border);cursor:pointer;}
+.rte-sep{width:1px;background:var(--border);margin:2px 4px;}
+.rte-content{min-height:220px;max-height:480px;overflow-y:auto;border:1.5px solid var(--border);border-radius:0 0 10px 10px;padding:16px;font-size:14.5px;line-height:1.6;background:#fff;}
+.rte-content:focus{outline:none;border-color:var(--navy);}
+.rte-content img{max-width:100%;border-radius:8px;margin:8px 0;}
+.rte-content a{color:var(--navy);text-decoration:underline;}
+.article-body-content{font-size:15.5px;line-height:1.8;color:var(--text);}
+.article-body-content img{max-width:100%;border-radius:10px;margin:16px 0;}
+.article-body-content a{color:var(--navy);text-decoration:underline;}
 .upload-box:hover{border-color:var(--navy);}
 .upload-preview{max-width:100%;max-height:140px;border-radius:10px;margin-top:10px;display:none;object-fit:cover;}
 .upload-preview.show{display:inline-block;}
@@ -652,6 +667,7 @@ function routeAfterLogin(){
   else if(CURRENT_PROFILE.role === 'teacher') go('teacher-dashboard');
   else go('dashboard');
 }
+function goToMySpace(){ routeAfterLogin(); }
 
 /* Map a Supabase course row (with joined instructor + modules + quiz_questions) to the shape the UI expects */
 function mapDbCourse(row){
@@ -672,6 +688,7 @@ function mapDbCourse(row){
     desc: row.description,
     color: (typeof row.id === 'string' ? row.id.charCodeAt(0) : row.id) % 6,
     image: row.cover_image_url || '',
+    status: row.status || 'publie',
     modules: (row.modules || []).sort((a,b)=>a.position-b.position).map(m => ({
       id: m.id,
       title: m.title,
@@ -701,14 +718,96 @@ function mapDbProduct(row){
   };
 }
 
+const COURSE_SELECT = '*, instructor:profiles(full_name), modules(*, quiz_questions(*))';
+
 async function sbLoadCourses(){
   const { data, error } = await sb
     .from('courses')
-    .select('*, instructor:profiles(full_name), modules(*, quiz_questions(*))')
+    .select(COURSE_SELECT)
+    .eq('status', 'publie')
     .order('created_at');
   if(error){ console.error(error); return; }
   COURSES.length = 0;
   data.forEach(row => COURSES.push(mapDbCourse(row)));
+}
+
+let MY_COURSES = [];
+let TEACHER_STUDENTS = [];
+let TEACHER_REVIEWS = [];
+let TEACHER_REVENUE = { total: 0, month: 0 };
+async function sbLoadMyCourses(){
+  if(!CURRENT_PROFILE) return;
+  const { data, error } = await sb
+    .from('courses')
+    .select(COURSE_SELECT)
+    .eq('instructor_id', CURRENT_PROFILE.id)
+    .order('created_at', {ascending:false});
+  if(error){ console.error(error); return; }
+  MY_COURSES.length = 0;
+  data.forEach(row => MY_COURSES.push(mapDbCourse(row)));
+
+  const courseIds = MY_COURSES.map(c=>c.id);
+  if(courseIds.length){
+    const { data: enrollments } = await sb.from('enrollments')
+      .select('*, student:profiles(full_name), course:courses(title)')
+      .in('course_id', courseIds)
+      .order('enrolled_at', {ascending:false});
+    TEACHER_STUDENTS = (enrollments||[]).map(e=>({
+      name: e.student ? e.student.full_name : 'Étudiant',
+      course: e.course ? e.course.title : '',
+      progress: e.progress,
+      enrolledAt: new Date(e.enrolled_at).toLocaleDateString('fr-FR'),
+    }));
+
+    const { data: payments } = await sb.from('payments').select('amount, status, created_at').in('course_id', courseIds).eq('status','paye');
+    const now = new Date();
+    let total = 0, month = 0;
+    (payments||[]).forEach(p=>{
+      total += Number(p.amount);
+      const d = new Date(p.created_at);
+      if(d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear()) month += Number(p.amount);
+    });
+    TEACHER_REVENUE = { total, month };
+
+    const { data: reviewRows } = await sb.from('reviews')
+      .select('*, student:profiles(full_name)')
+      .in('course_id', courseIds)
+      .order('created_at', {ascending:false});
+    TEACHER_REVIEWS = (reviewRows||[]).map(r=>({
+      name: r.student ? r.student.full_name : 'Étudiant', init: initials(r.student ? r.student.full_name : '?'),
+      rating: r.rating, comment: r.comment, date: new Date(r.created_at).toLocaleDateString('fr-FR'),
+    }));
+  } else {
+    TEACHER_STUDENTS = [];
+    TEACHER_REVENUE = { total: 0, month: 0 };
+    TEACHER_REVIEWS = [];
+  }
+}
+
+let ADMIN_COURSES = [];
+async function sbLoadAdminCourses(){
+  const { data, error } = await sb
+    .from('courses')
+    .select(COURSE_SELECT)
+    .order('created_at', {ascending:false});
+  if(error){ console.error(error); return; }
+  ADMIN_COURSES.length = 0;
+  data.forEach(row => ADMIN_COURSES.push(mapDbCourse(row)));
+}
+
+// Looks up a course across every list we might have loaded (public, mine, admin) — used so
+// review/edit screens can open a course that isn't published yet.
+function findCourseById(id){
+  return COURSES.find(c=>c.id===id) || MY_COURSES.find(c=>c.id===id) || ADMIN_COURSES.find(c=>c.id===id);
+}
+async function setCourseStatus(courseId, status){
+  const label = status==='publie' ? 'approuver et publier' : 'rejeter';
+  if(!confirm(`Confirmer : ${label} ce cours ?`)) return;
+  const { error } = await sb.from('courses').update({ status }).eq('id', courseId);
+  if(error){ alert('Erreur : ' + error.message); return; }
+  await Promise.all([sbLoadCourses(), sbLoadAdminCourses()]);
+  alert(status==='publie' ? 'Cours publié !' : 'Cours rejeté.');
+  renderApp();
 }
 
 let INITIAL_DATA_LOADED = false;
@@ -723,12 +822,12 @@ async function sbLoadPublicContent(){
   }
   const { data: articles } = await sb.from('articles').select('*').order('published_at', {ascending:false});
   if(articles){ ARTICLES.length = 0; articles.forEach((a,i) => ARTICLES.push({
-    id:a.id, tag:a.tag, title:a.title, excerpt:a.excerpt, author:a.author,
+    id:a.id, tag:a.tag, title:a.title, excerpt:a.excerpt, author:a.author, content:a.content||'',
     date:new Date(a.published_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}),
     icon:'📰', color:(i%6)+1, image:a.image_url||'' })); }
   const { data: news } = await sb.from('news').select('*').order('published_at', {ascending:false});
   if(news){ NEWS.length = 0; news.forEach(n => NEWS.push({
-    id:n.id, title:n.title, excerpt:n.excerpt, image:n.image_url||'',
+    id:n.id, title:n.title, excerpt:n.excerpt, image:n.image_url||'', content:n.content||'',
     date:new Date(n.published_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) })); }
   const { data: gallery } = await sb.from('gallery').select('*').order('position');
   if(gallery){ GALLERY.length = 0; gallery.forEach((g,i) => GALLERY.push({
@@ -772,6 +871,22 @@ async function sbLoadTestimonials(){
     </div>`).join('');
 }
 
+async function adminDeleteUser(userId, userName){
+  if(!userId){ alert("Impossible d'identifier ce compte."); return; }
+  if(!confirm(`Supprimer définitivement le compte de ${userName} ? Cette action est irréversible.`)) return;
+  const { data: { session } } = await sb.auth.getSession();
+  const { data, error } = await sb.functions.invoke('delete-user', {
+    body: { target_user_id: userId },
+  });
+  if(error || (data && data.error)){
+    alert('Erreur : ' + (data && data.error ? data.error : error.message));
+    return;
+  }
+  alert(userName + ' a été supprimé.');
+  await sbLoadAdminData();
+  await sbLoadPublicContent();
+  renderApp();
+}
 async function sbLoadAdminData(){
   const { data: allProducts } = await sb.from('products').select('*').order('created_at', {ascending:false});
   if(allProducts){ ADMIN_PRODUCTS.length = 0; allProducts.forEach(p => ADMIN_PRODUCTS.push(p)); }
@@ -921,6 +1036,7 @@ let state = {
   courseBuilderInfo: {},
   builderModules: [],
   showModuleEditor: false,
+  adminCreatingCourse: false,
 };
 
 const COURSES_PER_PAGE = 6;
@@ -948,6 +1064,7 @@ const PAGE_META = {
   'instructor-profile': {title:"Profil du formateur — JC Academy", desc:"Découvrez ce formateur et ses cours sur JC Academy."},
   'instructors': {title:"Nos Formateurs — JC Academy", desc:"Découvrez tous les formateurs experts de JC Academy."},
   'article-detail': {title:"Article — JC Academy", desc:"Article et conseils JC Academy."},
+  'news-detail': {title:"Actualité — JC Academy", desc:"Actualité JC Academy."},
   'teacher-dashboard': {title:"Espace Formateur — JC Academy", desc:"Gérez vos cours, étudiants et revenus sur JC Academy."},
   'admin-dashboard': {title:"Espace Admin — JC Academy", desc:"Administration de la plateforme JC Academy."},
   'products': {title:"Produits numériques — JC Academy", desc:"Ebooks, modèles et ressources téléchargeables JC Academy."},
@@ -983,6 +1100,7 @@ const ROUTES = [
   { page:'instructors', pattern:/^\/formateurs\/?$/, build:()=>'/formateurs' },
   { page:'instructor-profile', pattern:/^\/formateurs\/([^/]+)$/, build:(s)=>'/formateurs/'+encodeURIComponent(s.instructorName||''), parse:(m)=>({instructorName:decodeURIComponent(m[1])}) },
   { page:'article-detail', pattern:/^\/articles\/([^/]+)$/, build:(s)=>'/articles/'+s.articleId, parse:(m)=>({articleId:m[1]}) },
+  { page:'news-detail', pattern:/^\/actualites\/([^/]+)$/, build:(s)=>'/actualites/'+s.newsId, parse:(m)=>({newsId:m[1]}) },
   { page:'product-checkout', pattern:/^\/produits\/([^/]+)\/paiement$/, build:(s)=>'/produits/'+s.productId+'/paiement', parse:(m)=>({productId:m[1]}) },
   { page:'product-detail', pattern:/^\/produits\/([^/]+)$/, build:(s)=>'/produits/'+s.productId, parse:(m)=>({productId:m[1]}) },
   { page:'products', pattern:/^\/produits\/?$/, build:()=>'/produits' },
@@ -1044,6 +1162,14 @@ function go(page, opts={}){
   }
   if(page === 'admin-dashboard'){
     sbLoadAdminData().then(render);
+    sbLoadAdminCourses().then(render);
+  }
+  if(page === 'teacher-dashboard'){
+    sbLoadMyCourses().then(render);
+  }
+  if(page === 'course-detail'){
+    sbLoadMyCourses();
+    if(CURRENT_PROFILE && CURRENT_PROFILE.role==='admin') sbLoadAdminCourses().then(render);
   }
 }
 
@@ -1086,6 +1212,71 @@ function previewImage(fileInput, previewId, hiddenId){
   };
   reader.readAsDataURL(file);
 }
+function richTextEditorHTML(idPrefix, initialHtml){
+  return `
+  <div class="field">
+    <label>Contenu de l'article</label>
+    <div class="rte-toolbar" onmousedown="event.preventDefault()">
+      <select onchange="rteExec('${idPrefix}','fontName', this.value); this.selectedIndex=0;" title="Police">
+        <option value="">Police</option>
+        <option value="Arial">Arial</option>
+        <option value="Georgia">Georgia</option>
+        <option value="'Times New Roman',serif">Times New Roman</option>
+        <option value="'Alegreya',serif">Alegreya</option>
+        <option value="'Courier New',monospace">Courier New</option>
+        <option value="Verdana">Verdana</option>
+        <option value="'Sora',sans-serif">Sora</option>
+      </select>
+      <select onchange="rteExec('${idPrefix}','fontSize', this.value); this.selectedIndex=0;" title="Taille">
+        <option value="">Taille</option>
+        <option value="2">Petit</option>
+        <option value="3">Normal</option>
+        <option value="4">Moyen</option>
+        <option value="5">Grand</option>
+        <option value="6">Très grand</option>
+        <option value="7">Titre</option>
+      </select>
+      <div class="rte-sep"></div>
+      <button type="button" onclick="rteExec('${idPrefix}','bold')" title="Gras"><b>G</b></button>
+      <button type="button" onclick="rteExec('${idPrefix}','italic')" title="Italique"><i>I</i></button>
+      <button type="button" onclick="rteExec('${idPrefix}','underline')" title="Souligné"><u>S</u></button>
+      <div class="rte-sep"></div>
+      <input type="color" title="Couleur du texte" onchange="rteExec('${idPrefix}','foreColor', this.value)">
+      <input type="color" title="Surlignage" value="#fff176" onchange="rteExec('${idPrefix}','hiliteColor', this.value)">
+      <div class="rte-sep"></div>
+      <button type="button" onclick="rteExec('${idPrefix}','justifyLeft')" title="Aligner à gauche">⯇</button>
+      <button type="button" onclick="rteExec('${idPrefix}','justifyCenter')" title="Centrer">≡</button>
+      <button type="button" onclick="rteExec('${idPrefix}','justifyRight')" title="Aligner à droite">⯈</button>
+      <button type="button" onclick="rteExec('${idPrefix}','justifyFull')" title="Justifier">☰</button>
+      <div class="rte-sep"></div>
+      <button type="button" onclick="rteInsertLink('${idPrefix}')" title="Insérer un lien">🔗</button>
+      <button type="button" onclick="document.getElementById('${idPrefix}ImgPick').click()" title="Insérer une image">🖼️</button>
+      <input type="file" accept="image/*" class="file-input-hidden" id="${idPrefix}ImgPick" onchange="rteInsertImage('${idPrefix}', this)">
+    </div>
+    <div class="rte-content" id="${idPrefix}Editor" contenteditable="true">${initialHtml || ''}</div>
+  </div>`;
+}
+function rteExec(idPrefix, cmd, value){
+  document.getElementById(idPrefix+'Editor').focus();
+  try{ document.execCommand('styleWithCSS', false, true); }catch(e){}
+  document.execCommand(cmd, false, value);
+}
+function rteInsertLink(idPrefix){
+  const url = prompt('URL du lien :', 'https://');
+  if(url) rteExec(idPrefix, 'createLink', url);
+}
+function rteInsertImage(idPrefix, fileInput){
+  const file = fileInput.files && fileInput.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){ rteExec(idPrefix, 'insertImage', e.target.result); };
+  reader.readAsDataURL(file);
+}
+function rteGetContent(idPrefix){
+  const el = document.getElementById(idPrefix+'Editor');
+  return el ? el.innerHTML : '';
+}
+
 function imageUploadField(idPrefix, label){
   return `
   <div class="field">
@@ -1236,7 +1427,7 @@ function renderNavbar(){
     </div>` : '';
   const authButtons = state.loggedIn ? `
         ${bell}
-        <a href="#" class="navbar-userchip" onclick="go('dashboard');return false;" style="display:flex;align-items:center;gap:8px;padding:6px 10px 6px 6px;border-radius:999px;border:1px solid var(--border);">
+        <a href="#" class="navbar-userchip" onclick="goToMySpace();return false;" style="display:flex;align-items:center;gap:8px;padding:6px 10px 6px 6px;border-radius:999px;border:1px solid var(--border);">
           <span class="avatar" style="width:28px;height:28px;font-size:11px;margin:0;">${initials(state.currentUser.name)}</span>
           <span style="font-size:13px;font-weight:600;color:var(--navy-dark);">${state.currentUser.name}</span>
         </a>` : `
@@ -1252,9 +1443,9 @@ function renderNavbar(){
       </a>
       <nav class="nav-links" id="navLinks">
         ${links.map(l=>`<a href="#" class="${state.page===l.id?'active':''}" onclick="go('${l.id}');return false;">${l.label}</a>`).join('')}
-        ${state.loggedIn?`<a href="#" class="${state.page==='dashboard'?'active':''}" onclick="go('dashboard');return false;">Mon espace</a>`:''}
+        ${state.loggedIn?`<a href="#" class="${['dashboard','teacher-dashboard','admin-dashboard'].includes(state.page)?'active':''}" onclick="goToMySpace();return false;">Mon espace</a>`:''}
         <div class="mobile-auth-row" style="gap:10px;margin-top:8px;flex-wrap:wrap;">
-          ${state.loggedIn ? `<button class="btn btn-outline btn-sm" onclick="go('dashboard')">Mon espace</button>` : `<button class="btn btn-outline btn-sm" onclick="go('login')">Se connecter</button><button class="btn btn-primary btn-sm" onclick="go('register')">S'inscrire</button>`}
+          ${state.loggedIn ? `<button class="btn btn-outline btn-sm" onclick="goToMySpace()">Mon espace</button>` : `<button class="btn btn-outline btn-sm" onclick="go('login')">Se connecter</button><button class="btn btn-primary btn-sm" onclick="go('register')">S'inscrire</button>`}
         </div>
       </nav>
       <div class="nav-actions">
@@ -1463,14 +1654,14 @@ function renderHome(){
       </div>
       <div class="news-grid">
         ${NEWS.map(n=>`
-        <div class="news-card">
+        <a href="#" class="news-card" onclick="go('news-detail',{newsId:'${n.id}'});return false;" style="display:block;cursor:pointer;">
           <div class="news-thumb" style="${n.image?`background-image:url('${n.image}');background-size:cover;background-position:center;`:''}">${n.image?'':'<div class="tri"></div>'}</div>
           <div class="news-body">
             <div class="news-date">${n.date}</div>
             <h4>${n.title}</h4>
             <p>${n.excerpt}</p>
           </div>
-        </div>`).join('')}
+        </a>`).join('')}
       </div>
     </div>
   </section>
@@ -1706,7 +1897,7 @@ async function markVideoWatched(courseId, moduleDbId, videoUrl){
 }
 
 function renderCourseDetail(){
-  const c = COURSES.find(x=>x.id===state.courseId) || COURSES[0];
+  const c = findCourseById(state.courseId);
   if(!c){ return renderLoadingOr404(); }
   const hasRealModules = c.modules && c.modules.length>0;
   const modules = hasRealModules ? c.modules.map((m,idx)=>{
@@ -1740,6 +1931,20 @@ function renderCourseDetail(){
   }
 
   return `
+  ${c.status !== 'publie' ? `
+  <div class="container" style="padding-top:16px;">
+    <div style="background:#FFF8EA;border:1.5px solid var(--gold);border-radius:12px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div>
+        <b style="color:#8A5A00;">⏳ ${c.status==='en_attente' ? "Ce cours est en attente d'approbation" : (c.status==='rejete' ? 'Ce cours a été rejeté' : "Ce cours est en brouillon")}</b>
+        <p class="small-muted" style="margin:4px 0 0;">${CURRENT_PROFILE && CURRENT_PROFILE.role==='admin' ? "Vérifiez le contenu ci-dessous avant de l'approuver." : "Un administrateur doit l'approuver avant qu'il soit visible publiquement."}</p>
+      </div>
+      ${CURRENT_PROFILE && CURRENT_PROFILE.role==='admin' ? `
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline btn-sm" onclick="setCourseStatus('${c.id}','rejete')">Rejeter</button>
+        <button class="btn btn-gold btn-sm" onclick="setCourseStatus('${c.id}','publie')">✓ Approuver et publier</button>
+      </div>` : ''}
+    </div>
+  </div>` : ''}
   <section class="course-hero">
     <div class="container course-hero-grid">
       <div>
@@ -2684,9 +2889,22 @@ function renderArticleDetail(){
     <h1 style="font-size:28px;margin:0 0 10px;">${a.title}</h1>
     <p class="small-muted" style="margin-bottom:24px;">✍️ ${a.author} · ${a.date}</p>
     <div class="article-thumb" style="height:220px;border-radius:16px;font-size:52px;${a.image?`background-image:url('${a.image}');background-size:cover;background-position:center;`:`background:linear-gradient(135deg, ${palette[a.color%palette.length]} 0%, var(--navy-dark) 100%);`}margin-bottom:26px;">${a.image?'':a.icon}</div>
-    <p style="color:var(--text-muted);line-height:1.8;font-size:15px;">${a.excerpt}</p>
-    <p style="color:var(--text-muted);line-height:1.8;font-size:15px;">Chez JC Academy, nous croyons que la formation continue est la clé de l'évolution professionnelle. Cet article fait partie de notre série de ressources conçues pour aider nos étudiants à tirer le meilleur parti de leur parcours d'apprentissage, que ce soit à travers nos programmes certificat ou nos cursus diplômants.</p>
-    <button class="btn btn-outline" style="margin-top:10px;" onclick="go('home')">Voir plus d'articles</button>
+    ${a.content ? `<div class="article-body-content">${a.content}</div>` : `<p style="color:var(--text-muted);line-height:1.8;font-size:15px;">${a.excerpt}</p>`}
+    <button class="btn btn-outline" style="margin-top:24px;" onclick="go('home')">Voir plus d'articles</button>
+  </div>`;
+}
+function renderNewsDetail(){
+  const n = NEWS.find(x=>x.id===state.newsId);
+  if(!n) return renderLoadingOr404();
+  return `
+  <div class="container" style="padding:44px 24px 70px;max-width:760px;">
+    <a href="#" onclick="go('home');return false;" style="font-size:13px;color:var(--text-muted);">&larr; Retour à l'accueil</a>
+    <span class="article-tag" style="margin:18px 0 10px;display:inline-block;">Actualité</span>
+    <h1 style="font-size:28px;margin:0 0 10px;">${n.title}</h1>
+    <p class="small-muted" style="margin-bottom:24px;">${n.date}</p>
+    ${n.image ? `<div style="height:220px;border-radius:16px;background-image:url('${n.image}');background-size:cover;background-position:center;margin-bottom:26px;"></div>` : ''}
+    ${n.content ? `<div class="article-body-content">${n.content}</div>` : `<p style="color:var(--text-muted);line-height:1.8;font-size:15px;">${n.excerpt}</p>`}
+    <button class="btn btn-outline" style="margin-top:24px;" onclick="go('home')">Voir plus d'actualités</button>
   </div>`;
 }
 
@@ -2694,7 +2912,7 @@ function renderArticleDetail(){
 let TEACHER_COURSES_DRAFT = [];
 function renderTeacherDashboard(){
   const teacherName = CURRENT_PROFILE ? CURRENT_PROFILE.full_name : state.currentUser.name;
-  const myCourses = CURRENT_PROFILE ? COURSES.filter(c=>c.instructorId===CURRENT_PROFILE.id) : [];
+  const myCourses = MY_COURSES;
   const navItems = [
     {id:'overview', icon:'🏠', label:"Vue d'ensemble"},
     {id:'my-courses', icon:'📚', label:"Mes cours"},
@@ -2719,20 +2937,20 @@ function renderTeacherDashboard(){
     </aside>
     <div class="dash-main">
       ${state.teacherTab==='overview' ? `
-        <div class="dash-welcome"><h2>Bienvenue, Amélie 👋</h2><p>Voici un aperçu de vos formations et de vos étudiants.</p></div>
+        <div class="dash-welcome"><h2>Bienvenue, ${teacherName.split(' ')[0]} 👋</h2><p>Voici un aperçu de vos formations et de vos étudiants.</p></div>
         <div class="dash-stats">
-          <div class="dash-stat-card"><b>${myCourses.length}</b><span>Cours publiés</span></div>
-          <div class="dash-stat-card"><b>2 800</b><span>Étudiants inscrits</span></div>
-          <div class="dash-stat-card"><b>4.8</b><span>Note moyenne</span></div>
-          <div class="dash-stat-card"><b>${fmtHTG(1850)}</b><span>Revenus ce mois</span></div>
+          <div class="dash-stat-card"><b>${myCourses.length}</b><span>Cours (tous statuts)</span></div>
+          <div class="dash-stat-card"><b>${TEACHER_STUDENTS.length}</b><span>Étudiants inscrits</span></div>
+          <div class="dash-stat-card"><b>${(()=>{ const rated = myCourses.filter(c=>c.rating>0); return rated.length ? (rated.reduce((a,c)=>a+c.rating,0)/rated.length).toFixed(1) : '—'; })()}</b><span>Note moyenne</span></div>
+          <div class="dash-stat-card"><b>${fmtHTG(TEACHER_REVENUE.month)}</b><span>Revenus ce mois</span></div>
         </div>
         <h3 style="font-size:17px;margin-bottom:14px;">Mes cours</h3>
-        ${myCourses.map(c=>`
+        ${myCourses.length ? myCourses.map(c=>`
           <div class="enrolled-card">
             <div class="enrolled-thumb">📘</div>
-            <div class="enrolled-info"><h4>${c.title}</h4><span class="small-muted">${c.students?c.students.toLocaleString('fr-FR'):0} étudiants · ★ ${c.rating||'—'}</span></div>
+            <div class="enrolled-info"><h4>${c.title}</h4><span class="small-muted">${c.students?c.students.toLocaleString('fr-FR'):0} étudiants · ★ ${c.rating||'—'} · <span class="status-pill ${c.status==='publie'?'ok':(c.status==='rejete'?'blocked':'pending')}" style="margin-left:4px;">${c.status==='publie'?'Publié':(c.status==='rejete'?'Rejeté':'En attente')}</span></span></div>
             <button class="btn btn-outline btn-sm" onclick="go('course-detail',{courseId:'${c.id}'})">Voir</button>
-          </div>`).join('')}
+          </div>`).join('') : `<p class="small-muted">Vous n'avez pas encore créé de cours.</p>`}
       ` : ''}
 
       ${state.teacherTab==='my-courses' ? `
@@ -2740,7 +2958,7 @@ function renderTeacherDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Titre</th><th>Catégorie</th><th>Prix</th><th>Étudiants</th><th>Statut</th><th></th></tr></thead>
           <tbody>
-            ${myCourses.map(c=>`<tr><td>${c.title}</td><td>${c.cat==='certificat'?'Certificat':'Diplôme'}</td><td>${fmtHTG(c.price)}</td><td>${c.students||0}</td><td><span class="status-pill ok">Publié</span></td><td><button class="icon-btn" onclick="go('course-detail',{courseId:'${c.id}'})">✎</button></td></tr>`).join('')}
+            ${myCourses.map(c=>`<tr><td>${c.title}</td><td>${c.cat==='certificat'?'Certificat':'Diplôme'}</td><td>${fmtHTG(c.price)}</td><td>${c.students||0}</td><td><span class="status-pill ${c.status==='publie'?'ok':(c.status==='rejete'?'blocked':'pending')}">${c.status==='publie'?'Publié':(c.status==='rejete'?'Rejeté':'En attente')}</span></td><td><button class="icon-btn" onclick="go('course-detail',{courseId:'${c.id}'})">✎</button></td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -2819,11 +3037,9 @@ function renderTeacherDashboard(){
       ${state.teacherTab==='students' ? `
         <h2 style="font-size:20px;margin-bottom:20px;">Étudiants</h2>
         <div class="table-scroll"><table class="data-table">
-          <thead><tr><th>Nom</th><th>Cours</th><th>Progression</th><th>Dernière activité</th></tr></thead>
+          <thead><tr><th>Nom</th><th>Cours</th><th>Progression</th><th>Inscrit le</th></tr></thead>
           <tbody>
-            <tr><td>Moussa K.</td><td>Développement Web Full-Stack</td><td>65%</td><td>Aujourd'hui</td></tr>
-            <tr><td>Aïcha T.</td><td>Design UI/UX</td><td>40%</td><td>Hier</td></tr>
-            <tr><td>Nadia B.</td><td>Développement Web Full-Stack</td><td>100%</td><td>Il y a 3 jours</td></tr>
+            ${TEACHER_STUDENTS.length ? TEACHER_STUDENTS.map(s=>`<tr><td>${s.name}</td><td>${s.course}</td><td>${s.progress}%</td><td>${s.enrolledAt}</td></tr>`).join('') : `<tr><td colspan="4" class="small-muted">Aucun étudiant inscrit pour le moment.</td></tr>`}
           </tbody>
         </table></div>
       ` : ''}
@@ -2831,36 +3047,48 @@ function renderTeacherDashboard(){
       ${state.teacherTab==='revenue' ? `
         <h2 style="font-size:20px;margin-bottom:20px;">Revenus</h2>
         <div class="dash-stats">
-          <div class="dash-stat-card"><b>${fmtHTG(9400)}</b><span>Revenus totaux</span></div>
-          <div class="dash-stat-card"><b>${fmtHTG(1850)}</b><span>Ce mois-ci</span></div>
-          <div class="dash-stat-card"><b>${fmtHTG(7600)}</b><span>Disponible au retrait</span></div>
+          <div class="dash-stat-card"><b>${fmtHTG(TEACHER_REVENUE.total)}</b><span>Revenus totaux</span></div>
+          <div class="dash-stat-card"><b>${fmtHTG(TEACHER_REVENUE.month)}</b><span>Ce mois-ci</span></div>
+          <div class="dash-stat-card"><b>${fmtHTG(TEACHER_REVENUE.total)}</b><span>Disponible au retrait</span></div>
         </div>
-        <button class="btn btn-primary btn-sm">Demander un retrait</button>
+        <button class="btn btn-primary btn-sm" onclick="alert('Fonctionnalité de retrait à venir — contactez l\\'administrateur pour le moment.')">Demander un retrait</button>
       ` : ''}
 
       ${state.teacherTab==='reviews' ? `
         <h2 style="font-size:20px;margin-bottom:20px;">Avis reçus</h2>
-        ${(myCourses[0] ? (REVIEWS[myCourses[0].id]||[]) : []).map((r,idx)=>`
+        ${TEACHER_REVIEWS.length ? TEACHER_REVIEWS.map((r,idx)=>`
         <div class="review-item">
           <div class="avatar" style="width:42px;height:42px;font-size:13px;background:${palette[idx%palette.length]}">${r.init}</div>
           <div class="review-body"><div class="review-head"><b>${r.name}</b><span class="review-date">${r.date}</span></div><div class="stars">${renderStarsHTML(r.rating)}</div><p>${r.comment}</p></div>
-        </div>`).join('')}
+        </div>`).join('') : `<p class="small-muted">Aucun avis reçu pour le moment.</p>`}
       ` : ''}
 
       ${state.teacherTab==='profile' ? `
         <h2 style="font-size:20px;margin-bottom:20px;">Mon profil public</h2>
         <div style="max-width:480px;">
-          <div class="field"><label>Nom affiché</label><input type="text" value="${teacherName}"></div>
-          <div class="field"><label>Spécialité</label><input type="text" value="Développement Web"></div>
-          <div class="field"><label>Bio</label><textarea rows="3">10 ans d'expérience en ingénierie logicielle chez de grandes entreprises tech.</textarea></div>
-          <button class="btn btn-primary" onclick="alert('Profil mis à jour (démo)')">Enregistrer</button>
+          <div class="field"><label>Nom affiché</label><input type="text" id="teacherProfileName" value="${teacherName}"></div>
+          <div class="field"><label>Bio</label><textarea id="teacherProfileBio" rows="3">${(CURRENT_PROFILE&&CURRENT_PROFILE.bio)||''}</textarea></div>
+          <button class="btn btn-primary" onclick="saveTeacherProfile()">Enregistrer</button>
         </div>
       ` : ''}
     </div>
   </div>`;
 }
 let MODULE_DRAFT = {title:'', theory:'', videoUrl:'', quiz:[]};
+async function saveTeacherProfile(){
+  const full_name = document.getElementById('teacherProfileName').value.trim();
+  const bio = document.getElementById('teacherProfileBio').value.trim();
+  if(!full_name) return alert('Le nom ne peut pas être vide.');
+  const { error } = await sb.from('profiles').update({ full_name, bio }).eq('id', CURRENT_PROFILE.id);
+  if(error){ alert('Erreur : ' + error.message); return; }
+  CURRENT_PROFILE.full_name = full_name;
+  CURRENT_PROFILE.bio = bio;
+  state.currentUser.name = full_name;
+  alert('Profil mis à jour !');
+  renderApp();
+}
 function goToModuleStep(){
+  const instructorEl = document.getElementById('newCourseInstructor');
   state.courseBuilderInfo = {
     title: document.getElementById('newCourseTitle').value,
     cat: document.getElementById('newCourseCat').value,
@@ -2869,6 +3097,7 @@ function goToModuleStep(){
     price: document.getElementById('newCoursePrice').value,
     desc: document.getElementById('newCourseDesc').value,
     image: getUploadedImage('courseImg'),
+    instructorId: instructorEl ? (instructorEl.value || null) : null,
   };
   if(!state.courseBuilderInfo.title) return alert('Merci de renseigner un titre de cours.');
   state.courseBuilderStep = 2;
@@ -2931,6 +3160,7 @@ async function createTeacherCourse(){
     duration_text: info.duration || '4 semaines', weeks: 4, lang: 'Français',
     price_usd: price, description: info.desc || 'Description à venir.',
     cover_image_url: info.image || null, instructor_id: CURRENT_PROFILE.id,
+    status: 'en_attente',
   }).select().single();
   if(courseErr){ alert('Erreur lors de la création du cours : ' + courseErr.message); return; }
 
@@ -2950,8 +3180,8 @@ async function createTeacherCourse(){
     }
   }
 
-  alert('Cours publié avec succès, avec ' + state.builderModules.length + ' module(s) !');
-  await sbLoadCourses();
+  alert('Cours envoyé pour approbation ! Un administrateur va vérifier son contenu avant qu\'il soit visible publiquement (' + state.builderModules.length + ' module(s)).');
+  await sbLoadMyCourses();
   state.teacherTab='my-courses';
   state.courseBuilderStep=1;
   state.courseBuilderInfo={};
@@ -3036,10 +3266,13 @@ function renderAdminDashboard(){
 
       ${state.adminTab==='courses' ? `
         <div class="section-head" style="margin-bottom:20px;">
-          <h2 style="font-size:20px;margin:0;">Gestion des cours (${COURSES.length})</h2>
-          <button class="btn btn-primary btn-sm" onclick="adminAddCourse()">+ Ajouter un cours</button>
+          <h2 style="font-size:20px;margin:0;">Gestion des cours (${ADMIN_COURSES.length})</h2>
+          ${!state.adminCreatingCourse ? `<button class="btn btn-primary btn-sm" onclick="adminAddCourse()">+ Ajouter un cours</button>` : ''}
         </div>
-        ${state.editing.type==='course' ? (()=>{ const ed=COURSES.find(c=>c.id===state.editing.id); return `
+
+        ${state.adminCreatingCourse ? renderAdminCourseBuilder() : ''}
+
+        ${state.editing.type==='course' ? (()=>{ const ed=ADMIN_COURSES.find(c=>c.id===state.editing.id); return `
         <div style="max-width:520px;margin-bottom:26px;border:1.5px solid var(--gold);border-radius:14px;padding:18px;">
           <h4 style="margin:0 0 14px;font-size:14.5px;">Modifier le cours</h4>
           <div class="field"><label>Titre</label><input type="text" id="editCourseTitle" value="${ed.title}"></div>
@@ -3054,13 +3287,15 @@ function renderAdminDashboard(){
             <button class="btn btn-gold btn-sm" onclick="adminSaveCourseEdit()">Enregistrer</button>
           </div>
         </div>`; })() : ''}
+        ${!state.adminCreatingCourse ? `
         <div class="table-scroll"><table class="data-table">
-          <thead><tr><th>Titre</th><th>Catégorie</th><th>Prix</th><th>Formateur</th><th></th></tr></thead>
+          <thead><tr><th>Titre</th><th>Catégorie</th><th>Prix</th><th>Formateur</th><th>Statut</th><th></th></tr></thead>
           <tbody id="adminCoursesTbody">
-            ${COURSES.map(c=>`<tr><td>${c.title}</td><td>${c.cat==='certificat'?'Certificat':'Diplôme'}</td><td>${fmtHTG(c.price)}</td><td>${c.instructor}</td>
+            ${ADMIN_COURSES.map(c=>`<tr><td>${c.title}</td><td>${c.cat==='certificat'?'Certificat':'Diplôme'}</td><td>${fmtHTG(c.price)}</td><td>${c.instructor}</td>
+            <td><span class="status-pill ${c.status==='publie'?'ok':(c.status==='rejete'?'blocked':'pending')}">${c.status==='publie'?'Publié':(c.status==='rejete'?'Rejeté':'En attente')}</span></td>
             <td><button class="icon-btn" onclick="go('course-detail',{courseId:'${c.id}'})">👁</button> <button class="icon-btn" onclick="state.editing={type:'course',id:'${c.id}'};renderApp();">✎</button> <button class="icon-btn danger" onclick="adminDeleteCourse('${c.id}')">🗑</button></td></tr>`).join('')}
           </tbody>
-        </table></div>
+        </table></div>` : ''}
       ` : ''}
 
       ${state.adminTab==='articles' ? `
@@ -3072,7 +3307,8 @@ function renderAdminDashboard(){
           <h4 style="margin:0 0 14px;font-size:14.5px;">${ed?"Modifier l'article":'Nouvel article'}</h4>
           <div class="field"><label>Titre de l'article</label><input type="text" id="artTitle" value="${ed?ed.title:''}" placeholder="Titre..."></div>
           <div class="field"><label>Catégorie</label><input type="text" id="artTag" value="${ed?ed.tag:''}" placeholder="Ex: Carrière"></div>
-          <div class="field"><label>Extrait</label><textarea id="artExcerpt" rows="2" placeholder="Résumé court...">${ed?ed.excerpt:''}</textarea></div>
+          <div class="field"><label>Extrait (résumé affiché sur les cartes)</label><textarea id="artExcerpt" rows="2" placeholder="Résumé court...">${ed?ed.excerpt:''}</textarea></div>
+          ${richTextEditorHTML('artBody', ed?ed.content:'')}
           <div class="field"><label>Auteur</label><input type="text" id="artAuthor" value="${ed?ed.author:''}" placeholder="Ex: Équipe JC Academy"></div>
           ${imageUploadField('artImg', 'Image de couverture')}
           <div style="display:flex;gap:10px;">
@@ -3096,7 +3332,8 @@ function renderAdminDashboard(){
         <div style="max-width:520px;margin-bottom:26px;">
           <h4 style="margin:0 0 14px;font-size:14.5px;">${ed?"Modifier l'actualité":'Nouvelle actualité'}</h4>
           <div class="field"><label>Titre</label><input type="text" id="newsTitle" value="${ed?ed.title:''}" placeholder="Titre de l'actualité..."></div>
-          <div class="field"><label>Résumé</label><textarea id="newsExcerpt" rows="2" placeholder="Résumé court...">${ed?ed.excerpt:''}</textarea></div>
+          <div class="field"><label>Résumé (affiché sur les cartes)</label><textarea id="newsExcerpt" rows="2" placeholder="Résumé court...">${ed?ed.excerpt:''}</textarea></div>
+          ${richTextEditorHTML('newsBody', ed?ed.content:'')}
           ${imageUploadField('newsImg', 'Image')}
           <div style="display:flex;gap:10px;">
             ${ed?`<button class="btn btn-outline btn-sm" onclick="adminCancelEdit()">Annuler</button>`:''}
@@ -3106,7 +3343,7 @@ function renderAdminDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Titre</th><th>Date</th><th></th></tr></thead>
           <tbody id="adminNewsTbody">
-            ${NEWS.map(n=>`<tr><td>${n.title}</td><td>${n.date}</td><td><button class="icon-btn" onclick="state.editing={type:'news',id:'${n.id}'};renderApp();">✎</button> <button class="icon-btn danger" onclick="adminDeleteNews('${n.id}')">🗑</button></td></tr>`).join('')}
+            ${NEWS.map(n=>`<tr><td>${n.title}</td><td>${n.date}</td><td><button class="icon-btn" onclick="go('news-detail',{newsId:'${n.id}'})">👁</button> <button class="icon-btn" onclick="state.editing={type:'news',id:'${n.id}'};renderApp();">✎</button> <button class="icon-btn danger" onclick="adminDeleteNews('${n.id}')">🗑</button></td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3197,7 +3434,7 @@ function renderAdminDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Nom</th><th>Spécialité</th><th>Cours publiés</th><th></th></tr></thead>
           <tbody>
-            ${INSTRUCTORS.map(i=>`<tr><td>${i.name}</td><td>${i.role}</td><td>${COURSES.filter(c=>c.instructor===i.name).length}</td><td><button class="icon-btn" onclick="go('instructor-profile',{instructorName:'${i.name.replace(/'/g,"\\'")}'})">👁</button></td></tr>`).join('')}
+            ${INSTRUCTORS.map(i=>`<tr><td>${i.name}</td><td>${i.role}</td><td>${COURSES.filter(c=>c.instructor===i.name).length}</td><td><button class="icon-btn" onclick="go('instructor-profile',{instructorName:'${i.name.replace(/'/g,"\\'")}'})">👁</button> <button class="icon-btn danger" onclick="adminDeleteUser('${i.profileId}','${i.name.replace(/'/g,"\\'")}')">🗑</button></td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3205,9 +3442,9 @@ function renderAdminDashboard(){
       ${state.adminTab==='users' ? `
         <h2 style="font-size:20px;margin-bottom:20px;">Utilisateurs</h2>
         <div class="table-scroll"><table class="data-table">
-          <thead><tr><th>Nom</th><th>Rôle</th><th>Statut</th><th>Inscrit le</th></tr></thead>
+          <thead><tr><th>Nom</th><th>Rôle</th><th>Statut</th><th>Inscrit le</th><th></th></tr></thead>
           <tbody>
-            ${ADMIN_USERS.map(u=>`<tr><td>${u.name}</td><td>${u.role}</td><td><span class="status-pill ${u.status==='Actif'?'ok':'blocked'}">${u.status}</span></td><td>${u.joined}</td></tr>`).join('')}
+            ${ADMIN_USERS.map(u=>`<tr><td>${u.name}</td><td>${u.role}</td><td><span class="status-pill ${u.status==='Actif'?'ok':'blocked'}">${u.status}</span></td><td>${u.joined}</td><td>${u.role!=='Admin'?`<button class="icon-btn danger" onclick="adminDeleteUser('${u.id}','${u.name.replace(/'/g,"\\'")}')">🗑</button>`:''}</td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3248,7 +3485,137 @@ async function adminSaveContent(){
   alert('Contenu du site mis à jour !');
   renderApp();
 }
-function adminAddCourse(){ go('become-teacher'); }
+function adminAddCourse(){
+  state.adminCreatingCourse = true;
+  state.courseBuilderStep = 1;
+  state.courseBuilderInfo = {};
+  state.builderModules = [];
+  renderApp();
+}
+function adminCancelCourseCreation(){
+  state.adminCreatingCourse = false;
+  renderApp();
+}
+function renderAdminCourseBuilder(){
+  const teacherOptions = INSTRUCTORS.map(i=>`<option value="${i.profileId}" ${state.courseBuilderInfo.instructorId===i.profileId?'selected':''}>${i.name}</option>`).join('');
+  return `
+  <div style="border:1.5px solid var(--gold);border-radius:14px;padding:20px;margin-bottom:26px;">
+    <div class="steps" style="justify-content:flex-start;margin-bottom:24px;">
+      <div class="step-dot ${state.courseBuilderStep===1?'active':(state.courseBuilderStep>1?'done':'')}">${state.courseBuilderStep>1?'✓':1}</div>
+      <div class="step-line"></div>
+      <div class="step-dot ${state.courseBuilderStep===2?'active':''}">2</div>
+      <span class="small-muted" style="margin-left:14px;">${state.courseBuilderStep===1?"Étape 1 — Informations générales":"Étape 2 — Modules, théorie, vidéo et quiz"}</span>
+    </div>
+
+    ${state.courseBuilderStep===1 ? `
+    <div style="max-width:560px;">
+      <div class="field"><label>Titre du cours</label><input type="text" id="newCourseTitle" value="${state.courseBuilderInfo.title||''}" placeholder="Ex: Introduction au Cloud Computing"></div>
+      <div class="field"><label>Formateur assigné</label><select id="newCourseInstructor">
+        <option value="">— Moi-même (Administrateur) —</option>
+        ${teacherOptions}
+      </select></div>
+      <div class="field"><label>Catégorie</label><select id="newCourseCat"><option value="certificat">Programme Certificat</option><option value="diplome">Programme Diplôme</option></select></div>
+      <div class="field"><label>Niveau</label><select id="newCourseLevel"><option>Débutant</option><option>Intermédiaire</option><option>Avancé</option><option>Tous niveaux</option></select></div>
+      <div class="field"><label>Durée</label><input type="text" id="newCourseDuration" value="${state.courseBuilderInfo.duration||''}" placeholder="Ex: 6 semaines"></div>
+      <div class="field"><label>Prix (USD, 0 pour gratuit)</label><input type="number" id="newCoursePrice" value="${state.courseBuilderInfo.price||''}" placeholder="0"></div>
+      <div class="field"><label>Description</label><textarea id="newCourseDesc" rows="3" placeholder="Décrivez ce cours...">${state.courseBuilderInfo.desc||''}</textarea></div>
+      ${imageUploadField('courseImg', 'Image de couverture du cours')}
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-outline" onclick="adminCancelCourseCreation()">Annuler</button>
+        <button class="btn btn-primary" onclick="goToModuleStep()">Continuer vers les modules &rarr;</button>
+      </div>
+    </div>
+    ` : ''}
+
+    ${state.courseBuilderStep===2 ? `
+    <div style="max-width:640px;">
+      <h4 style="font-size:15px;margin-bottom:10px;">Modules ajoutés (${state.builderModules.length})</h4>
+      ${state.builderModules.length===0?`<p class="small-muted" style="margin-bottom:16px;">Aucun module pour l'instant. Ajoutez votre premier module ci-dessous.</p>`:''}
+      ${state.builderModules.map((m,idx)=>`
+        <div class="builder-module-card">
+          <div><b style="font-size:13.5px;">Module ${idx+1} — ${m.title}</b><div class="small-muted">${m.theory?'📖 Texte ✓':'📖 Sans texte'} · ${m.videoUrl?'🎬 Vidéo ✓':'🎬 Sans vidéo'} · ❓ ${m.quiz.length} question(s)</div></div>
+          <button class="icon-btn danger" onclick="removeBuilderModule(${idx})">🗑</button>
+        </div>`).join('')}
+
+      ${!state.showModuleEditor ? `
+      <button class="btn btn-outline btn-sm" style="margin:10px 0 24px;" onclick="openModuleEditor()">+ Ajouter un module</button>
+      ` : `
+      <div class="module" style="padding:20px;margin:14px 0 24px;border-color:var(--gold);">
+        <h4 style="margin:0 0 14px;font-size:14.5px;">Nouveau module</h4>
+        <div class="field"><label>Titre du module</label><input type="text" id="modTitle" placeholder="Ex: Les bases du HTML"></div>
+        <div class="field"><label>Contenu théorique (texte obligatoire avant la vidéo)</label><textarea id="modTheory" rows="4" placeholder="Rédigez le contenu que l'étudiant doit lire..."></textarea></div>
+        <div class="field"><label>URL de la vidéo (YouTube, Vimeo...)</label><input type="text" id="modVideo" placeholder="https://..."></div>
+
+        <h5 style="font-size:13.5px;margin:18px 0 10px;">Quiz du module</h5>
+        <div id="quizQuestionsList">
+          ${MODULE_DRAFT.quiz.map((q,qi)=>`
+          <div class="quiz-q-card">
+            <div class="field" style="margin-bottom:10px;"><label>Question ${qi+1}</label><input type="text" id="qz_${qi}_q" value="${q.q||''}" placeholder="Intitulé de la question"></div>
+            ${[0,1,2,3].map(oi=>`
+            <div class="opt-row">
+              <input type="radio" name="qz_${qi}_correct" value="${oi}" ${q.correct===oi?'checked':''}>
+              <input type="text" id="qz_${qi}_opt${oi}" value="${(q.options&&q.options[oi])||''}" placeholder="Option ${String.fromCharCode(65+oi)}">
+            </div>`).join('')}
+            <button class="icon-btn danger" onclick="removeQuizQuestion(${qi})">🗑 Retirer cette question</button>
+          </div>`).join('')}
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="addQuizQuestion()">+ Ajouter une question</button>
+
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button class="btn btn-outline btn-sm" onclick="cancelModuleEditor()">Annuler</button>
+          <button class="btn btn-gold btn-sm" onclick="saveModuleDraft()">Enregistrer ce module</button>
+        </div>
+      </div>
+      `}
+
+      <div style="display:flex;gap:10px;margin-top:10px;">
+        <button class="btn btn-outline" onclick="state.courseBuilderStep=1;renderApp();">&larr; Retour</button>
+        <button class="btn btn-outline" onclick="adminCancelCourseCreation()">Annuler</button>
+        <button class="btn btn-gold" onclick="createAdminCourse()">Publier le cours</button>
+      </div>
+    </div>
+    ` : ''}
+  </div>`;
+}
+async function createAdminCourse(){
+  const info = state.courseBuilderInfo;
+  if(!info || !info.title) return alert('Merci de compléter les informations du cours (étape 1).');
+  const price = parseInt(info.price)||0;
+  const instructorId = info.instructorId || CURRENT_PROFILE.id;
+
+  const { data: courseRow, error: courseErr } = await sb.from('courses').insert({
+    title: info.title, category: info.cat, level: info.level,
+    duration_text: info.duration || '4 semaines', weeks: 4, lang: 'Français',
+    price_usd: price, description: info.desc || 'Description à venir.',
+    cover_image_url: info.image || null, instructor_id: instructorId,
+    status: 'publie',
+  }).select().single();
+  if(courseErr){ alert('Erreur lors de la création du cours : ' + courseErr.message); return; }
+
+  for(let i=0; i<state.builderModules.length; i++){
+    const m = state.builderModules[i];
+    const { data: modRow, error: modErr } = await sb.from('modules').insert({
+      course_id: courseRow.id, position: i+1, title: m.title || `Module ${i+1}`,
+      theory: m.theory || null, video_url: m.videoUrl || null,
+    }).select().single();
+    if(modErr){ console.error(modErr); continue; }
+    if(m.quiz && m.quiz.length){
+      const questionRows = m.quiz.map((q, qi) => ({
+        module_id: modRow.id, position: qi+1, question: q.q || `Question ${qi+1}`,
+        options: q.options, correct_index: q.correct,
+      }));
+      await sb.from('quiz_questions').insert(questionRows);
+    }
+  }
+
+  alert('Cours publié avec succès !');
+  await Promise.all([sbLoadCourses(), sbLoadAdminCourses()]);
+  state.adminCreatingCourse = false;
+  state.courseBuilderStep = 1;
+  state.courseBuilderInfo = {};
+  state.builderModules = [];
+  renderApp();
+}
 async function adminDeleteCourse(id){
   if(!confirm('Supprimer ce cours ? Cette action supprime aussi ses modules, quiz et inscriptions.')) return;
   const { error } = await sb.from('courses').delete().eq('id', id);
@@ -3284,12 +3651,13 @@ async function adminSaveArticle(){
   const tag = document.getElementById('artTag').value || 'Général';
   const excerpt = document.getElementById('artExcerpt').value || '';
   const author = document.getElementById('artAuthor').value || 'Administrateur';
+  const content = rteGetContent('artBody');
   const image = getUploadedImage('artImg');
   if(state.editing.type==='article' && state.editing.id){
-    const { error } = await sb.from('articles').update({ title, tag, excerpt, author, image_url: image || undefined }).eq('id', state.editing.id);
+    const { error } = await sb.from('articles').update({ title, tag, excerpt, author, content, image_url: image || undefined }).eq('id', state.editing.id);
     if(error){ alert('Erreur : ' + error.message); return; }
   } else {
-    const { error } = await sb.from('articles').insert({ title, tag, excerpt, author, image_url: image });
+    const { error } = await sb.from('articles').insert({ title, tag, excerpt, author, content, image_url: image });
     if(error){ alert('Erreur : ' + error.message); return; }
   }
   state.editing = {type:null,id:null};
@@ -3308,12 +3676,13 @@ async function adminSaveNews(){
   const title = document.getElementById('newsTitle').value;
   if(!title) return alert('Merci de renseigner un titre.');
   const excerpt = document.getElementById('newsExcerpt').value || '';
+  const content = rteGetContent('newsBody');
   const image = getUploadedImage('newsImg');
   if(state.editing.type==='news' && state.editing.id){
-    const { error } = await sb.from('news').update({ title, excerpt, image_url: image || undefined }).eq('id', state.editing.id);
+    const { error } = await sb.from('news').update({ title, excerpt, content, image_url: image || undefined }).eq('id', state.editing.id);
     if(error){ alert('Erreur : ' + error.message); return; }
   } else {
-    const { error } = await sb.from('news').insert({ title, excerpt, image_url: image });
+    const { error } = await sb.from('news').insert({ title, excerpt, content, image_url: image });
     if(error){ alert('Erreur : ' + error.message); return; }
   }
   state.editing = {type:null,id:null};
@@ -3597,6 +3966,7 @@ function renderApp(){
     case 'instructor-profile': html = renderInstructorProfile(); break;
     case 'instructors': html = renderAllInstructorsPage(); break;
     case 'article-detail': html = renderArticleDetail(); break;
+    case 'news-detail': html = renderNewsDetail(); break;
     case 'teacher-dashboard': html = renderTeacherDashboard(); break;
     case 'admin-dashboard': html = renderAdminDashboard(); break;
     case 'products': html = renderProducts(); break;
