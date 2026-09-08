@@ -518,16 +518,19 @@ footer a:hover{color:var(--gold);}
 @media (max-width:860px){.dash-user{padding:0 4px 12px;margin-bottom:10px;}}
 .dash-user b{display:block;font-size:14px;}
 .dash-user span{font-size:12px;color:var(--text-muted);}
-.dash-nav{display:flex;flex-direction:column;gap:4px;}
+.dash-nav{display:flex;flex-direction:column;gap:3px;}
 @media (max-width:860px){
-  .dash-nav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;padding-bottom:6px;}
-  .dash-nav a{flex:0 0 auto;white-space:nowrap;padding:9px 13px;font-size:13px;}
-  .dash-nav .logout{margin-top:0;padding-top:0;border-top:none;border-left:1px solid var(--border);padding-left:14px;}
+  .dash-nav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:8px;padding-bottom:6px;}
+  .dash-nav a{flex:0 0 auto;white-space:nowrap;padding:9px 15px;font-size:13px;border-radius:999px;}
+  .dash-nav .logout{margin-top:0;padding-top:0;border-top:none;border-left:1px solid var(--border);padding-left:14px;border-radius:999px;}
 }
-.dash-nav a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:9px;font-size:14px;font-weight:600;color:var(--text-muted);}
-.dash-nav a:hover{background:#fff;}
-.dash-nav a.active{background:var(--navy);color:#fff;}
-.dash-nav .logout{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);color:#B23B3B;}
+.dash-nav a{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:10px;font-size:13.5px;font-weight:600;color:var(--text-muted);position:relative;transition:background .15s ease, color .15s ease, transform .1s ease;}
+.dash-nav a:hover{background:#fff;color:var(--navy);transform:translateX(2px);}
+.dash-nav a.active{background:var(--navy);color:#fff;box-shadow:0 4px 14px rgba(12,44,116,.25);}
+.dash-nav a.active::before{content:"";position:absolute;left:-18px;top:50%;transform:translateY(-50%);width:4px;height:22px;background:var(--gold);border-radius:0 4px 4px 0;}
+@media (max-width:860px){.dash-nav a.active::before{display:none;}}
+.dash-nav .logout{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);color:#B23B3B;}
+.dash-nav .logout:hover{background:#FBEAEA;color:#B23B3B;}
 .dash-main{padding:32px;background:#fff;min-width:0;overflow-x:hidden;}
 @media (max-width:860px){.dash-main{padding:22px;}}
 .dash-welcome{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);border-radius:16px;padding:26px 28px;color:#fff;margin-bottom:28px;position:relative;overflow:hidden;}
@@ -584,6 +587,13 @@ async function sbRestoreSession(){
     }
   }
   await sbLoadPublicContent();
+  // Re-check access now that we know the real auth/role state — matters for direct loads and page refreshes,
+  // which land here without going through go()'s role guard.
+  if(ROUTE_ROLES[state.page]){
+    if(!state.loggedIn || !CURRENT_PROFILE) state.page = 'login';
+    else if(!ROUTE_ROLES[state.page].includes(CURRENT_PROFILE.role)) state.page = 'home';
+  }
+  loadDataForPage(state.page);
   render();
 }
 
@@ -819,6 +829,8 @@ async function sbLoadPublicContent(){
       hero_lead:'heroLead', footer_about:'footerAbout', about_mission:'aboutMission',
       contact_phone:'contactPhone', contact_phone2:'contactPhone2', contact_address:'contactAddress', contact_email:'contactEmail', contact_hours:'contactHours' };
     content.forEach(row => { if(map[row.key]) SITE_CONTENT[map[row.key]] = row.value; });
+    const rateRow = content.find(r=>r.key==='exchange_rate_htg_per_usd');
+    if(rateRow && !isNaN(parseFloat(rateRow.value))) EXCHANGE_RATE = parseFloat(rateRow.value);
   }
   const { data: articles } = await sb.from('articles').select('*').order('published_at', {ascending:false});
   if(articles){ ARTICLES.length = 0; articles.forEach((a,i) => ARTICLES.push({
@@ -955,7 +967,7 @@ async function loadStudentData(){
 }
 const STUDENT_CERTIFICATES = [];
 
-const EXCHANGE_RATE = 131; // 1 USD ≈ 131 HTG (taux indicatif, à ajuster régulièrement)
+let EXCHANGE_RATE = 131; // 1 USD ≈ 131 HTG (taux indicatif, modifiable par l'admin)
 
 const COURSES = [];
 
@@ -1154,11 +1166,16 @@ function go(page, opts={}){
       history.pushState({page, opts}, '', newPath);
     }
   }
+  loadDataForPage(page);
+}
+function loadDataForPage(page){
   if(state.loggedIn && CURRENT_PROFILE && ['dashboard','checkout','course-detail','certificate-request'].includes(page)){
     loadStudentData().then(render);
   }
   if(page === 'course-detail'){
     sbLoadModuleProgress(state.courseId).then(render);
+    sbLoadMyCourses();
+    if(CURRENT_PROFILE && CURRENT_PROFILE.role==='admin') sbLoadAdminCourses().then(render);
   }
   if(page === 'admin-dashboard'){
     sbLoadAdminData().then(render);
@@ -1166,10 +1183,6 @@ function go(page, opts={}){
   }
   if(page === 'teacher-dashboard'){
     sbLoadMyCourses().then(render);
-  }
-  if(page === 'course-detail'){
-    sbLoadMyCourses();
-    if(CURRENT_PROFILE && CURRENT_PROFILE.role==='admin') sbLoadAdminCourses().then(render);
   }
 }
 
@@ -1253,13 +1266,32 @@ function richTextEditorHTML(idPrefix, initialHtml){
       <button type="button" onclick="document.getElementById('${idPrefix}ImgPick').click()" title="Insérer une image">🖼️</button>
       <input type="file" accept="image/*" class="file-input-hidden" id="${idPrefix}ImgPick" onchange="rteInsertImage('${idPrefix}', this)">
     </div>
-    <div class="rte-content" id="${idPrefix}Editor" contenteditable="true">${initialHtml || ''}</div>
+    <div class="rte-content" id="${idPrefix}Editor" contenteditable="true" onmouseup="rteSaveSelection('${idPrefix}')" onkeyup="rteSaveSelection('${idPrefix}')" onblur="rteSaveSelection('${idPrefix}')">${initialHtml || ''}</div>
   </div>`;
 }
+let RTE_SAVED_RANGE = {};
+function rteSaveSelection(idPrefix){
+  const sel = window.getSelection();
+  if(sel && sel.rangeCount > 0){
+    const range = sel.getRangeAt(0);
+    const editor = document.getElementById(idPrefix+'Editor');
+    if(editor && editor.contains(range.commonAncestorContainer)){
+      RTE_SAVED_RANGE[idPrefix] = range.cloneRange();
+    }
+  }
+}
 function rteExec(idPrefix, cmd, value){
-  document.getElementById(idPrefix+'Editor').focus();
+  const editor = document.getElementById(idPrefix+'Editor');
+  editor.focus();
+  const saved = RTE_SAVED_RANGE[idPrefix];
+  if(saved){
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(saved);
+  }
   try{ document.execCommand('styleWithCSS', false, true); }catch(e){}
   document.execCommand(cmd, false, value);
+  rteSaveSelection(idPrefix);
 }
 function rteInsertLink(idPrefix){
   const url = prompt('URL du lien :', 'https://');
@@ -1296,12 +1328,12 @@ function getUploadedImage(idPrefix){
   const urlVal = document.getElementById(idPrefix+'Url')?.value;
   return dataVal || urlVal || '';
 }
-function imageUploadFieldAvatar(idPrefix){
+function imageUploadFieldAvatar(idPrefix, existingUrl){
   return `
   <div style="text-align:center;margin-bottom:20px;">
     <label for="${idPrefix}File" style="cursor:pointer;display:inline-block;">
-      <img id="${idPrefix}Preview" src="" alt="" style="display:none;width:90px;height:90px;border-radius:50%;object-fit:cover;margin:0 auto;">
-      <div id="${idPrefix}Placeholder" class="avatar-upload">Ajouter<br>une photo</div>
+      <img id="${idPrefix}Preview" src="${existingUrl||''}" alt="" style="${existingUrl?'display:block;':'display:none;'}width:90px;height:90px;border-radius:50%;object-fit:cover;margin:0 auto;">
+      <div id="${idPrefix}Placeholder" class="avatar-upload" style="${existingUrl?'display:none;':''}">Ajouter<br>une photo</div>
     </label>
     <input type="file" accept="image/*" id="${idPrefix}File" class="file-input-hidden" onchange="previewAvatar(this,'${idPrefix}Preview','${idPrefix}Placeholder','${idPrefix}Data')">
     <input type="hidden" id="${idPrefix}Data" value="">
@@ -1740,6 +1772,18 @@ function moveGallery(dir){
   galleryIndex = (galleryIndex + dir + GALLERY.length) % GALLERY.length;
   setGallery(galleryIndex);
 }
+let GALLERY_AUTOPLAY_TIMER = null;
+function startGalleryAutoplay(){
+  stopGalleryAutoplay();
+  GALLERY_AUTOPLAY_TIMER = setInterval(()=>{
+    const wrap = document.getElementById('gallerySlideshow');
+    if(!wrap){ stopGalleryAutoplay(); return; }
+    moveGallery(1);
+  }, 5000);
+}
+function stopGalleryAutoplay(){
+  if(GALLERY_AUTOPLAY_TIMER){ clearInterval(GALLERY_AUTOPLAY_TIMER); GALLERY_AUTOPLAY_TIMER = null; }
+}
 
 function courseCardHTML(c){
   const inWishlist = state.wishlist.includes(c.id);
@@ -1939,7 +1983,7 @@ function renderCourseDetail(){
         <p class="small-muted" style="margin:4px 0 0;">${CURRENT_PROFILE && CURRENT_PROFILE.role==='admin' ? "Vérifiez le contenu ci-dessous avant de l'approuver." : "Un administrateur doit l'approuver avant qu'il soit visible publiquement."}</p>
       </div>
       ${CURRENT_PROFILE && CURRENT_PROFILE.role==='admin' ? `
-      <div style="display:flex;gap:10px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-outline btn-sm" onclick="setCourseStatus('${c.id}','rejete')">Rejeter</button>
         <button class="btn btn-gold btn-sm" onclick="setCourseStatus('${c.id}','publie')">✓ Approuver et publier</button>
       </div>` : ''}
@@ -2252,7 +2296,7 @@ function renderRegister(){
         <p class="small-muted" style="margin-top:-10px;margin-bottom:18px;">Étape 3 — Complétez votre profil</p>
         ${imageUploadFieldAvatar('regAvatar')}
         <div class="field"><label>Bio courte</label><textarea id="regBio" rows="3" placeholder="Parlez-nous un peu de vous..."></textarea></div>
-        <div style="display:flex;gap:10px;margin-top:6px;">
+        <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
           <button class="btn btn-gold btn-block" id="regFinishBtn" onclick="handleRegisterFinish()">Terminer</button>
         </div>
       </div>` : ''}
@@ -2483,17 +2527,7 @@ function renderDashboard(){
         ${!PAYMENTS.length?`<p class="small-muted">Aucune transaction pour le moment.</p>`:''}
       ` : ''}
 
-      ${state.dashTab==='profile' ? `
-        <h2 style="font-size:20px;margin-bottom:20px;">Mon profil</h2>
-        <div style="max-width:480px;">
-          ${imageUploadFieldAvatar('studentAvatar')}
-          <div class="field"><label>Nom complet</label><input type="text" value="${state.currentUser.name}"></div>
-          <div class="field"><label>E-mail</label><input type="email" value="${state.currentUser.email}"></div>
-          <div class="field"><label>Téléphone</label><input type="tel" placeholder="+509 00 00 0000"></div>
-          <div class="field"><label>Bio</label><textarea rows="3" placeholder="Parlez-nous un peu de vous..."></textarea></div>
-          <button class="btn btn-primary" onclick="alert('Profil mis à jour (démo)')">Enregistrer les modifications</button>
-        </div>
-      ` : ''}
+      ${state.dashTab==='profile' ? renderProfileTabHTML('student') : ''}
 
       ${state.dashTab==='settings' ? `
         <h2 style="font-size:20px;margin-bottom:20px;">Paramètres du compte</h2>
@@ -2921,6 +2955,7 @@ function renderTeacherDashboard(){
     {id:'revenue', icon:'💰', label:"Revenus"},
     {id:'reviews', icon:'⭐', label:"Avis reçus"},
     {id:'profile', icon:'👤', label:"Mon profil public"},
+    {id:'payments', icon:'💳', label:"Recevoir mes paiements"},
   ];
   return `
   <div class="dash-shell">
@@ -3000,9 +3035,9 @@ function renderTeacherDashboard(){
           ` : `
           <div class="module" style="padding:20px;margin:14px 0 24px;border-color:var(--gold);">
             <h4 style="margin:0 0 14px;font-size:14.5px;">Nouveau module</h4>
-            <div class="field"><label>Titre du module</label><input type="text" id="modTitle" placeholder="Ex: Les bases du HTML"></div>
-            <div class="field"><label>Contenu théorique (texte obligatoire avant la vidéo)</label><textarea id="modTheory" rows="4" placeholder="Rédigez le contenu que l'étudiant doit lire..."></textarea></div>
-            <div class="field"><label>URL de la vidéo (YouTube, Vimeo...)</label><input type="text" id="modVideo" placeholder="https://..."></div>
+            <div class="field"><label>Titre du module</label><input type="text" id="modTitle" value="${MODULE_DRAFT.title||''}" placeholder="Ex: Les bases du HTML"></div>
+            <div class="field"><label>Contenu théorique (texte obligatoire avant la vidéo)</label><textarea id="modTheory" rows="4" placeholder="Rédigez le contenu que l'étudiant doit lire...">${MODULE_DRAFT.theory||''}</textarea></div>
+            <div class="field"><label>URL de la vidéo (YouTube, Vimeo...)</label><input type="text" id="modVideo" value="${MODULE_DRAFT.videoUrl||''}" placeholder="https://..."></div>
 
             <h5 style="font-size:13.5px;margin:18px 0 10px;">Quiz du module</h5>
             <div id="quizQuestionsList">
@@ -3019,14 +3054,14 @@ function renderTeacherDashboard(){
             </div>
             <button class="btn btn-outline btn-sm" onclick="addQuizQuestion()">+ Ajouter une question</button>
 
-            <div style="display:flex;gap:10px;margin-top:20px;">
+            <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;">
               <button class="btn btn-outline btn-sm" onclick="cancelModuleEditor()">Annuler</button>
               <button class="btn btn-gold btn-sm" onclick="saveModuleDraft()">Enregistrer ce module</button>
             </div>
           </div>
           `}
 
-          <div style="display:flex;gap:10px;margin-top:10px;">
+          <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
             <button class="btn btn-outline" onclick="state.courseBuilderStep=1;renderApp();">&larr; Retour</button>
             <button class="btn btn-gold" onclick="createTeacherCourse()">Publier le cours</button>
           </div>
@@ -3063,14 +3098,8 @@ function renderTeacherDashboard(){
         </div>`).join('') : `<p class="small-muted">Aucun avis reçu pour le moment.</p>`}
       ` : ''}
 
-      ${state.teacherTab==='profile' ? `
-        <h2 style="font-size:20px;margin-bottom:20px;">Mon profil public</h2>
-        <div style="max-width:480px;">
-          <div class="field"><label>Nom affiché</label><input type="text" id="teacherProfileName" value="${teacherName}"></div>
-          <div class="field"><label>Bio</label><textarea id="teacherProfileBio" rows="3">${(CURRENT_PROFILE&&CURRENT_PROFILE.bio)||''}</textarea></div>
-          <button class="btn btn-primary" onclick="saveTeacherProfile()">Enregistrer</button>
-        </div>
-      ` : ''}
+      ${state.teacherTab==='profile' ? renderProfileTabHTML('teacher') : ''}
+      ${state.teacherTab==='payments' ? renderPayoutTabHTML('teacher') : ''}
     </div>
   </div>`;
 }
@@ -3191,6 +3220,7 @@ async function createTeacherCourse(){
 
 /* ===================== ADMIN DASHBOARD ===================== */
 function renderAdminDashboard(){
+  const adminName = CURRENT_PROFILE ? CURRENT_PROFILE.full_name : 'Administrateur';
   const navItems = [
     {id:'overview', icon:'🏠', label:"Vue d'ensemble"},
     {id:'content', icon:'📝', label:"Contenu du site"},
@@ -3202,18 +3232,21 @@ function renderAdminDashboard(){
     {id:'pages', icon:'📄', label:"Pages"},
     {id:'teachers', icon:'🧑‍🏫', label:"Formateurs"},
     {id:'users', icon:'👥', label:"Utilisateurs"},
+    {id:'profile', icon:'👤', label:"Mon profil"},
+    {id:'payments', icon:'💳', label:"Recevoir mes paiements"},
     {id:'settings', icon:'⚙️', label:"Paramètres du site"},
   ];
   return `
   <div class="dash-shell">
     <aside class="dash-sidebar">
       <div class="dash-user">
-        <span class="avatar" style="width:44px;height:44px;background:var(--gold);color:var(--navy-dark);">AD</span>
-        <div><b>Administrateur</b><span>Accès complet</span></div>
+        ${CURRENT_PROFILE && CURRENT_PROFILE.avatar_url ? `<img src="${CURRENT_PROFILE.avatar_url}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">` : `<span class="avatar" style="width:44px;height:44px;background:var(--gold);color:var(--navy-dark);">${initials(adminName)}</span>`}
+        <div><b>${adminName}</b><span>Administrateur</span></div>
       </div>
       <nav class="dash-nav">
         ${navItems.map(n=>`<a href="#" class="${state.adminTab===n.id?'active':''}" onclick="state.adminTab='${n.id}';renderApp();return false;">${n.icon} ${n.label}</a>`).join('')}
         <a href="#" onclick="go('home');return false;">🔁 Retour au site</a>
+        <a href="#" class="logout" onclick="logout();return false;">🚪 Déconnexion</a>
       </nav>
     </aside>
     <div class="dash-main">
@@ -3282,7 +3315,7 @@ function renderAdminDashboard(){
           </select></div>
           <div class="field"><label>Durée</label><input type="text" id="editCourseDuration" value="${ed.duration}"></div>
           <div class="field"><label>Description</label><textarea id="editCourseDesc" rows="3">${ed.desc}</textarea></div>
-          <div style="display:flex;gap:10px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button class="btn btn-outline btn-sm" onclick="adminCancelEdit()">Annuler</button>
             <button class="btn btn-gold btn-sm" onclick="adminSaveCourseEdit()">Enregistrer</button>
           </div>
@@ -3311,7 +3344,7 @@ function renderAdminDashboard(){
           ${richTextEditorHTML('artBody', ed?ed.content:'')}
           <div class="field"><label>Auteur</label><input type="text" id="artAuthor" value="${ed?ed.author:''}" placeholder="Ex: Équipe JC Academy"></div>
           ${imageUploadField('artImg', 'Image de couverture')}
-          <div style="display:flex;gap:10px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
             ${ed?`<button class="btn btn-outline btn-sm" onclick="adminCancelEdit()">Annuler</button>`:''}
             <button class="btn btn-gold btn-sm" onclick="adminSaveArticle()">${ed?'Enregistrer':"Publier l'article"}</button>
           </div>
@@ -3335,7 +3368,7 @@ function renderAdminDashboard(){
           <div class="field"><label>Résumé (affiché sur les cartes)</label><textarea id="newsExcerpt" rows="2" placeholder="Résumé court...">${ed?ed.excerpt:''}</textarea></div>
           ${richTextEditorHTML('newsBody', ed?ed.content:'')}
           ${imageUploadField('newsImg', 'Image')}
-          <div style="display:flex;gap:10px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
             ${ed?`<button class="btn btn-outline btn-sm" onclick="adminCancelEdit()">Annuler</button>`:''}
             <button class="btn btn-gold btn-sm" onclick="adminSaveNews()">${ed?'Enregistrer':"Publier l'actualité"}</button>
           </div>
@@ -3358,7 +3391,7 @@ function renderAdminDashboard(){
           <div class="field"><label>Titre de la photo</label><input type="text" id="galTitle" value="${ed?ed.title:''}" placeholder="Ex: Journée portes ouvertes"></div>
           <div class="field"><label>Description</label><input type="text" id="galDesc" value="${ed?ed.desc:''}" placeholder="Courte description..."></div>
           ${imageUploadField('galImg', 'Photo')}
-          <div style="display:flex;gap:10px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
             ${ed?`<button class="btn btn-outline btn-sm" onclick="adminCancelEdit()">Annuler</button>`:''}
             <button class="btn btn-gold btn-sm" onclick="adminSaveGallery()">${ed?'Enregistrer':'Ajouter à la galerie'}</button>
           </div>
@@ -3390,7 +3423,7 @@ function renderAdminDashboard(){
             <option value="brouillon" ${ed&&ed.status==='brouillon'?'selected':''}>Brouillon</option>
             <option value="publie" ${ed&&ed.status==='publie'?'selected':''}>Publié</option>
           </select></div>
-          <div style="display:flex;gap:10px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
             ${ed?`<button class="btn btn-outline btn-sm" onclick="adminCancelEdit()">Annuler</button>`:''}
             <button class="btn btn-gold btn-sm" onclick="adminSaveProduct()">${ed?'Enregistrer':'Créer le produit'}</button>
           </div>
@@ -3416,7 +3449,7 @@ function renderAdminDashboard(){
             <option ${ed&&ed.status==='Brouillon'?'selected':''}>Brouillon</option>
             <option ${ed&&ed.status==='Publiée'?'selected':''}>Publiée</option>
           </select></div>
-          <div style="display:flex;gap:10px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
             ${ed?`<button class="btn btn-outline btn-sm" onclick="adminCancelEdit()">Annuler</button>`:''}
             <button class="btn btn-gold btn-sm" onclick="adminSavePage()">${ed?'Enregistrer':'Créer la page'}</button>
           </div>
@@ -3452,15 +3485,84 @@ function renderAdminDashboard(){
       ${state.adminTab==='settings' ? `
         <h2 style="font-size:20px;margin-bottom:20px;">Paramètres du site</h2>
         <div style="max-width:480px;">
-          <div class="field"><label>Nom de la plateforme</label><input type="text" value="JC Academy"></div>
-          <div class="field"><label>E-mail de contact</label><input type="email" value="${SITE_CONTENT.contactEmail}"></div>
-          <div class="field"><label>Devise principale</label><select><option>Gourde haïtienne (HTG)</option><option>Dollar américain (USD)</option></select></div>
-          <div class="field"><label>Taux de change indicatif (1 USD =)</label><input type="number" value="${EXCHANGE_RATE}"> <span class="small-muted">HTG</span></div>
-          <button class="btn btn-primary" onclick="alert('Paramètres enregistrés (démo)')">Enregistrer</button>
+          <div class="field"><label>Nom de la plateforme</label><input type="text" id="siteAppName" value="JC Academy"></div>
+          <div class="field"><label>E-mail de contact</label><input type="email" id="siteSettingsEmail" value="${SITE_CONTENT.contactEmail}"></div>
+          <div class="field"><label>Devise principale d'affichage</label><select id="siteMainCurrency">
+            <option ${(SITE_CONTENT.mainCurrency||'HTG')==='HTG'?'selected':''}>Gourde haïtienne (HTG)</option>
+            <option ${SITE_CONTENT.mainCurrency==='USD'?'selected':''}>Dollar américain (USD)</option>
+          </select></div>
+          <div class="field"><label>Taux de change indicatif (1 USD =)</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="number" id="siteExchangeRate" value="${EXCHANGE_RATE}" step="0.01">
+              <span class="small-muted">HTG</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="adminSaveSiteSettings()">Enregistrer</button>
         </div>
       ` : ''}
+
+      ${state.adminTab==='profile' ? renderProfileTabHTML('admin') : ''}
+      ${state.adminTab==='payments' ? renderPayoutTabHTML('admin') : ''}
     </div>
   </div>`;
+}
+function renderProfileTabHTML(role){
+  const prefix = role; // 'admin' or 'teacher'
+  return `
+  <h2 style="font-size:20px;margin-bottom:20px;">Mon profil</h2>
+  <div style="max-width:480px;">
+    ${imageUploadFieldAvatar(prefix+'ProfileAvatar', CURRENT_PROFILE?CURRENT_PROFILE.avatar_url:'')}
+    <div class="field"><label>Nom complet</label><input type="text" id="${prefix}ProfileName" value="${CURRENT_PROFILE?CURRENT_PROFILE.full_name:''}"></div>
+    <div class="field"><label>E-mail</label><input type="email" value="${CURRENT_PROFILE?CURRENT_PROFILE.email:''}" disabled style="opacity:.6;"></div>
+    <div class="field"><label>Téléphone</label><input type="tel" id="${prefix}ProfilePhone" value="${(CURRENT_PROFILE&&CURRENT_PROFILE.phone)||''}" placeholder="+509 00 00 0000"></div>
+    <div class="field"><label>Bio</label><textarea id="${prefix}ProfileBio" rows="3">${(CURRENT_PROFILE&&CURRENT_PROFILE.bio)||''}</textarea></div>
+    <button class="btn btn-primary" onclick="saveMyProfile('${prefix}')">Enregistrer</button>
+  </div>`;
+}
+function renderPayoutTabHTML(role){
+  const prefix = role;
+  const info = (CURRENT_PROFILE && CURRENT_PROFILE.payout_info) || {};
+  return `
+  <h2 style="font-size:20px;margin-bottom:6px;">Recevoir mes paiements</h2>
+  <p class="small-muted" style="margin-bottom:20px;">💰 Les paiements sont versés une fois par mois, entre le <b>25 et le 5</b> du mois suivant.</p>
+  <div style="max-width:480px;">
+    <div class="field"><label>Méthode de réception</label><select id="${prefix}PayoutMethod">
+      <option value="moncash" ${info.method==='moncash'?'selected':''}>MonCash</option>
+      <option value="natcash" ${info.method==='natcash'?'selected':''}>NatCash</option>
+      <option value="banque" ${info.method==='banque'?'selected':''}>Virement bancaire</option>
+    </select></div>
+    <div class="field"><label>Numéro / Compte de réception</label><input type="text" id="${prefix}PayoutAccount" value="${info.account||''}" placeholder="Ex: +509 00 00 0000 ou numéro de compte"></div>
+    <div class="field"><label>Nom complet du titulaire</label><input type="text" id="${prefix}PayoutName" value="${info.holderName||''}" placeholder="Nom tel qu'enregistré chez le fournisseur"></div>
+    <button class="btn btn-primary" onclick="savePayoutInfo('${prefix}')">Enregistrer</button>
+  </div>`;
+}
+async function saveMyProfile(prefix){
+  const full_name = document.getElementById(prefix+'ProfileName').value.trim();
+  const phone = document.getElementById(prefix+'ProfilePhone').value.trim();
+  const bio = document.getElementById(prefix+'ProfileBio').value.trim();
+  const avatarDataEl = document.getElementById(prefix+'ProfileAvatarData');
+  const avatar_url = avatarDataEl ? avatarDataEl.value : '';
+  if(!full_name) return alert('Le nom ne peut pas être vide.');
+  const updates = { full_name, phone, bio };
+  if(avatar_url) updates.avatar_url = avatar_url;
+  const { error } = await sb.from('profiles').update(updates).eq('id', CURRENT_PROFILE.id);
+  if(error){ alert('Erreur : ' + error.message); return; }
+  Object.assign(CURRENT_PROFILE, updates);
+  state.currentUser.name = full_name;
+  alert('Profil mis à jour !');
+  renderApp();
+}
+async function savePayoutInfo(prefix){
+  const method = document.getElementById(prefix+'PayoutMethod').value;
+  const account = document.getElementById(prefix+'PayoutAccount').value.trim();
+  const holderName = document.getElementById(prefix+'PayoutName').value.trim();
+  if(!account || !holderName) return alert('Merci de remplir tous les champs.');
+  const payout_info = { method, account, holderName };
+  const { error } = await sb.from('profiles').update({ payout_info }).eq('id', CURRENT_PROFILE.id);
+  if(error){ alert('Erreur : ' + error.message); return; }
+  CURRENT_PROFILE.payout_info = payout_info;
+  alert('Informations de paiement enregistrées ! Vos prochains versements (effectués entre le 25 et le 5 du mois) utiliseront ces coordonnées.');
+  renderApp();
 }
 async function adminSaveContent(){
   const fields = {
@@ -3483,6 +3585,24 @@ async function adminSaveContent(){
   const { error } = await sb.from('site_content').upsert(rows, { onConflict: 'key' });
   if(error){ alert('Erreur : ' + error.message); return; }
   alert('Contenu du site mis à jour !');
+  renderApp();
+}
+async function adminSaveSiteSettings(){
+  const rateVal = parseFloat(document.getElementById('siteExchangeRate').value);
+  if(isNaN(rateVal) || rateVal <= 0){ alert('Merci de saisir un taux de change valide.'); return; }
+  const email = document.getElementById('siteSettingsEmail').value.trim();
+  const currency = document.getElementById('siteMainCurrency').value.includes('USD') ? 'USD' : 'HTG';
+  const rows = [
+    { key: 'exchange_rate_htg_per_usd', value: String(rateVal) },
+    { key: 'contact_email', value: email },
+    { key: 'main_currency', value: currency },
+  ];
+  const { error } = await sb.from('site_content').upsert(rows, { onConflict: 'key' });
+  if(error){ alert('Erreur : ' + error.message); return; }
+  EXCHANGE_RATE = rateVal;
+  SITE_CONTENT.contactEmail = email;
+  SITE_CONTENT.mainCurrency = currency;
+  alert('Paramètres enregistrés !');
   renderApp();
 }
 function adminAddCourse(){
@@ -3520,7 +3640,7 @@ function renderAdminCourseBuilder(){
       <div class="field"><label>Prix (USD, 0 pour gratuit)</label><input type="number" id="newCoursePrice" value="${state.courseBuilderInfo.price||''}" placeholder="0"></div>
       <div class="field"><label>Description</label><textarea id="newCourseDesc" rows="3" placeholder="Décrivez ce cours...">${state.courseBuilderInfo.desc||''}</textarea></div>
       ${imageUploadField('courseImg', 'Image de couverture du cours')}
-      <div style="display:flex;gap:10px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-outline" onclick="adminCancelCourseCreation()">Annuler</button>
         <button class="btn btn-primary" onclick="goToModuleStep()">Continuer vers les modules &rarr;</button>
       </div>
@@ -3542,9 +3662,9 @@ function renderAdminCourseBuilder(){
       ` : `
       <div class="module" style="padding:20px;margin:14px 0 24px;border-color:var(--gold);">
         <h4 style="margin:0 0 14px;font-size:14.5px;">Nouveau module</h4>
-        <div class="field"><label>Titre du module</label><input type="text" id="modTitle" placeholder="Ex: Les bases du HTML"></div>
-        <div class="field"><label>Contenu théorique (texte obligatoire avant la vidéo)</label><textarea id="modTheory" rows="4" placeholder="Rédigez le contenu que l'étudiant doit lire..."></textarea></div>
-        <div class="field"><label>URL de la vidéo (YouTube, Vimeo...)</label><input type="text" id="modVideo" placeholder="https://..."></div>
+        <div class="field"><label>Titre du module</label><input type="text" id="modTitle" value="${MODULE_DRAFT.title||''}" placeholder="Ex: Les bases du HTML"></div>
+        <div class="field"><label>Contenu théorique (texte obligatoire avant la vidéo)</label><textarea id="modTheory" rows="4" placeholder="Rédigez le contenu que l'étudiant doit lire...">${MODULE_DRAFT.theory||''}</textarea></div>
+        <div class="field"><label>URL de la vidéo (YouTube, Vimeo...)</label><input type="text" id="modVideo" value="${MODULE_DRAFT.videoUrl||''}" placeholder="https://..."></div>
 
         <h5 style="font-size:13.5px;margin:18px 0 10px;">Quiz du module</h5>
         <div id="quizQuestionsList">
@@ -3561,14 +3681,14 @@ function renderAdminCourseBuilder(){
         </div>
         <button class="btn btn-outline btn-sm" onclick="addQuizQuestion()">+ Ajouter une question</button>
 
-        <div style="display:flex;gap:10px;margin-top:20px;">
+        <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;">
           <button class="btn btn-outline btn-sm" onclick="cancelModuleEditor()">Annuler</button>
           <button class="btn btn-gold btn-sm" onclick="saveModuleDraft()">Enregistrer ce module</button>
         </div>
       </div>
       `}
 
-      <div style="display:flex;gap:10px;margin-top:10px;">
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
         <button class="btn btn-outline" onclick="state.courseBuilderStep=1;renderApp();">&larr; Retour</button>
         <button class="btn btn-outline" onclick="adminCancelCourseCreation()">Annuler</button>
         <button class="btn btn-gold" onclick="createAdminCourse()">Publier le cours</button>
@@ -3978,6 +4098,7 @@ function renderApp(){
   app.innerHTML = html;
   renderNavbar();
   renderFooter();
+  if(state.page==='home' && GALLERY.length>1) startGalleryAutoplay(); else stopGalleryAutoplay();
 }
 
 function render(){ renderApp(); renderCookieBanner(); }
