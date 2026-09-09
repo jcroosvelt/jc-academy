@@ -213,6 +213,7 @@ img{max-width:100%;display:block;}
 .cookie-banner .actions{display:flex;gap:10px;flex-wrap:wrap;}
 
 /* image upload */
+.icon{width:1.15em;height:1.15em;display:inline-block;vertical-align:-0.22em;flex-shrink:0;}
 .upload-box{border:1.5px dashed var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:var(--surface);}
 
 /* rich text editor */
@@ -836,14 +837,14 @@ async function sbLoadPublicContent(){
   if(articles){ ARTICLES.length = 0; articles.forEach((a,i) => ARTICLES.push({
     id:a.id, tag:a.tag, title:a.title, excerpt:a.excerpt, author:a.author, content:a.content||'',
     date:new Date(a.published_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}),
-    icon:'📰', color:(i%6)+1, image:a.image_url||'' })); }
+    icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="5" width="14" height="14" rx="1"/><path d="M17 8h4v9a2 2 0 0 1-2 2H9"/><path d="M7 9h6"/><path d="M7 13h6"/><path d="M7 17h4"/></svg>', color:(i%6)+1, image:a.image_url||'' })); }
   const { data: news } = await sb.from('news').select('*').order('published_at', {ascending:false});
   if(news){ NEWS.length = 0; news.forEach(n => NEWS.push({
     id:n.id, title:n.title, excerpt:n.excerpt, image:n.image_url||'', content:n.content||'',
     date:new Date(n.published_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) })); }
   const { data: gallery } = await sb.from('gallery').select('*').order('position');
   if(gallery){ GALLERY.length = 0; gallery.forEach((g,i) => GALLERY.push({
-    icon:'🖼️', title:g.title, desc:g.description, color:(i%6)+1, image:g.image_url||'', dbId:g.id })); }
+    icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5.5-5.5L5 21"/></svg>', title:g.title, desc:g.description, color:(i%6)+1, image:g.image_url||'', dbId:g.id })); }
   const { data: pages } = await sb.from('pages').select('*').order('created_at');
   if(pages){ ADMIN_PAGES.length = 0; pages.forEach(p => ADMIN_PAGES.push({
     id:p.id, title:p.title, slug:p.slug, status: p.status==='publiee'?'Publiée':'Brouillon' })); }
@@ -1199,7 +1200,7 @@ function renderCookieBanner(){
   if(getCookieChoice()){ root.innerHTML=''; return; }
   root.innerHTML = `
   <div class="cookie-banner">
-    <p>🍪 Nous utilisons des cookies pour améliorer votre expérience sur JC Academy et analyser l'utilisation de la plateforme. Vous pouvez accepter ou refuser les cookies non essentiels.</p>
+    <p><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="14.5" cy="8.5" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/><circle cx="9.5" cy="15" r="1" fill="currentColor"/></svg> Nous utilisons des cookies pour améliorer votre expérience sur JC Academy et analyser l'utilisation de la plateforme. Vous pouvez accepter ou refuser les cookies non essentiels.</p>
     <div class="actions">
       <button class="btn btn-outline-white btn-sm" onclick="cookieChoice('refused')">Refuser</button>
       <button class="btn btn-gold btn-sm" onclick="cookieChoice('accepted')">Accepter</button>
@@ -1257,13 +1258,13 @@ function richTextEditorHTML(idPrefix, initialHtml){
       <input type="color" title="Couleur du texte" onchange="rteExec('${idPrefix}','foreColor', this.value)">
       <input type="color" title="Surlignage" value="#fff176" onchange="rteExec('${idPrefix}','hiliteColor', this.value)">
       <div class="rte-sep"></div>
-      <button type="button" onclick="rteExec('${idPrefix}','justifyLeft')" title="Aligner à gauche">⯇</button>
+      <button type="button" onclick="rteExec('${idPrefix}','justifyLeft')" title="Aligner à gauche"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 6h14"/><path d="M3 12h18"/><path d="M3 18h11"/></svg></button>
       <button type="button" onclick="rteExec('${idPrefix}','justifyCenter')" title="Centrer">≡</button>
-      <button type="button" onclick="rteExec('${idPrefix}','justifyRight')" title="Aligner à droite">⯈</button>
-      <button type="button" onclick="rteExec('${idPrefix}','justifyFull')" title="Justifier">☰</button>
+      <button type="button" onclick="rteExec('${idPrefix}','justifyRight')" title="Aligner à droite"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M7 6h14"/><path d="M3 12h18"/><path d="M10 18h11"/></svg></button>
+      <button type="button" onclick="rteExec('${idPrefix}','justifyFull')" title="Justifier"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg></button>
       <div class="rte-sep"></div>
-      <button type="button" onclick="rteInsertLink('${idPrefix}')" title="Insérer un lien">🔗</button>
-      <button type="button" onclick="document.getElementById('${idPrefix}ImgPick').click()" title="Insérer une image">🖼️</button>
+      <button type="button" onclick="rteInsertLink('${idPrefix}')" title="Insérer un lien"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M9.5 14.5 14.5 9.5"/><path d="M11 6l1.5-1.5a4 4 0 0 1 5.7 5.7L16.5 12"/><path d="M13 18l-1.5 1.5a4 4 0 0 1-5.7-5.7L7.5 12"/></svg></button>
+      <button type="button" onclick="document.getElementById('${idPrefix}ImgPick').click()" title="Insérer une image"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5.5-5.5L5 21"/></svg></button>
       <input type="file" accept="image/*" class="file-input-hidden" id="${idPrefix}ImgPick" onchange="rteInsertImage('${idPrefix}', this)">
     </div>
     <div class="rte-content" id="${idPrefix}Editor" contenteditable="true" onmouseup="rteSaveSelection('${idPrefix}')" onkeyup="rteSaveSelection('${idPrefix}')" onblur="rteSaveSelection('${idPrefix}')">${initialHtml || ''}</div>
@@ -1314,7 +1315,7 @@ function imageUploadField(idPrefix, label){
   <div class="field">
     <label>${label}</label>
     <label class="upload-box" for="${idPrefix}File">
-      📁 Cliquez pour choisir une image (ou glissez-la ici)
+      <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 7a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7Z"/></svg> Cliquez pour choisir une image (ou glissez-la ici)
       <img id="${idPrefix}Preview" class="upload-preview" alt="Aperçu">
     </label>
     <input type="file" accept="image/*" id="${idPrefix}File" class="file-input-hidden" onchange="previewImage(this,'${idPrefix}Preview','${idPrefix}Data')">
@@ -1430,7 +1431,7 @@ async function toggleWishlist(id, ev){
 function unreadCount(){ return NOTIFICATIONS.filter(n=>n.unread).length; }
 function renderStarsHTML(rating){
   const full = Math.round(rating);
-  return '★'.repeat(full) + '☆'.repeat(5-full);
+  return '<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6 6.6.6-5 4.4 1.5 6.5L12 16.8 6 20l1.5-6.5-5-4.4 6.6-.6L12 2.5Z"/></svg>'.repeat(full) + '<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M12 2.5l2.9 6 6.6.6-5 4.4 1.5 6.5L12 16.8 6 20l1.5-6.5-5-4.4 6.6-.6L12 2.5Z"/></svg>'.repeat(5-full);
 }
 
 /* ===================== NAVBAR ===================== */
@@ -1445,7 +1446,7 @@ function renderNavbar(){
   const bell = state.loggedIn ? `
     <div class="notif-bell-wrap">
       <button class="notif-bell" onclick="state.showNotif=!state.showNotif;renderApp();" aria-label="Notifications">
-        🔔${unreadCount()?`<span class="notif-badge">${unreadCount()}</span>`:''}
+        <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>${unreadCount()?`<span class="notif-badge">${unreadCount()}</span>`:''}
       </button>
       ${state.showNotif?`
       <div class="notif-dropdown">
@@ -1577,8 +1578,8 @@ function renderHome(){
             <polygon points="290,150 370,340 210,340" fill="#F5A800"/>
             <circle cx="200" cy="230" r="80" fill="none" stroke="#fff" stroke-width="14"/>
           </svg>
-          <div class="peak-card" style="top:6%;left:-6%;"><span style="width:34px;height:34px;border-radius:50%;background:#E4F7EE;color:#1D9A6C;display:flex;align-items:center;justify-content:center;">✓</span> Certificat délivré</div>
-          <div class="peak-card" style="bottom:8%;right:-8%;"><span style="width:34px;height:34px;border-radius:50%;background:#E7ECF7;color:#0C2C74;display:flex;align-items:center;justify-content:center;">🎓</span> Programme diplôme</div>
+          <div class="peak-card" style="top:6%;left:-6%;"><span style="width:34px;height:34px;border-radius:50%;background:#E4F7EE;color:#1D9A6C;display:flex;align-items:center;justify-content:center;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg></span> Certificat délivré</div>
+          <div class="peak-card" style="bottom:8%;right:-8%;"><span style="width:34px;height:34px;border-radius:50%;background:#E7ECF7;color:#0C2C74;display:flex;align-items:center;justify-content:center;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></svg></span> Programme diplôme</div>
         </div>
       </div>
     </div>
@@ -1738,7 +1739,7 @@ function renderHome(){
             <span class="article-tag">${a.tag}</span>
             <h4>${a.title}</h4>
             <p>${a.excerpt}</p>
-            <div class="article-meta">✍️ ${a.author} · ${a.date}</div>
+            <div class="article-meta"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> ${a.author} · ${a.date}</div>
           </div>
         </a>`).join('')}
       </div>
@@ -1790,7 +1791,7 @@ function courseCardHTML(c){
   return `
   <a href="#" class="course-card" onclick="go('course-detail',{courseId:'${c.id}'});return false;" style="position:relative;">
     <div class="course-thumb" style="background:linear-gradient(135deg, ${palette[c.color%palette.length]} 0%, var(--navy-dark) 100%);">
-      <button class="wishlist-btn ${inWishlist?'active':''}" onclick="toggleWishlist(${c.id}, event)" aria-label="Favoris">${inWishlist?'♥':'♡'}</button>
+      <button class="wishlist-btn ${inWishlist?'active':''}" onclick="toggleWishlist(${c.id}, event)" aria-label="Favoris">${inWishlist?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M12 21s-7-4.4-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.6-9.5 9-9.5 9Z"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 21s-7-4.4-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.6-9.5 9-9.5 9Z"/></svg>'}</button>
       <span class="course-cat">${c.cat==='certificat'?'Certificat':'Diplôme'}</span>
     </div>
     <div class="course-body">
@@ -1801,10 +1802,10 @@ function courseCardHTML(c){
       <h3>${c.title}</h3>
       <div class="course-meta">
         <span>⏱ ${c.duration}</span>
-        <span>👤 ${c.students.toLocaleString('fr-FR')}</span>
+        <span><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg> ${c.students.toLocaleString('fr-FR')}</span>
       </div>
       <div class="course-foot">
-        <span class="stars">★ ${c.rating}</span>
+        <span class="stars"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6 6.6.6-5 4.4 1.5 6.5L12 16.8 6 20l1.5-6.5-5-4.4 6.6-.6L12 2.5Z"/></svg> ${c.rating}</span>
         <span class="price ${c.free?'free':''}">${fmtHTG(c.price)}</span>
       </div>
     </div>
@@ -1862,8 +1863,8 @@ function renderCourses(){
       <span style="width:1px;height:24px;background:var(--border);margin:0 6px;"></span>
       <span class="small-muted" style="margin-right:6px;">Type :</span>
       <button class="filter-chip ${state.filterTag==='all'?'active':''}" onclick="state.filterTag='all';state.coursesPage=1;renderApp();">Tous</button>
-      <button class="filter-chip ${state.filterTag==='free'?'gold-active':''}" onclick="state.filterTag='free';state.coursesPage=1;renderApp();">🎁 Gratuit</button>
-      <button class="filter-chip ${state.filterTag==='paid'?'active':''}" onclick="state.filterTag='paid';state.coursesPage=1;renderApp();">💳 Payant</button>
+      <button class="filter-chip ${state.filterTag==='free'?'gold-active':''}" onclick="state.filterTag='free';state.coursesPage=1;renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="8" width="18" height="13" rx="1"/><path d="M3 8h18v4H3z"/><path d="M12 8v13"/><path d="M8 8a2.5 2.5 0 0 1 0-5c2 0 4 5 4 5"/><path d="M16 8a2.5 2.5 0 0 0 0-5c-2 0-4 5-4 5"/></svg> Gratuit</button>
+      <button class="filter-chip ${state.filterTag==='paid'?'active':''}" onclick="state.filterTag='paid';state.coursesPage=1;renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Payant</button>
     </div>
 
     <div class="filters-row">
@@ -1985,7 +1986,7 @@ function renderCourseDetail(){
       ${CURRENT_PROFILE && CURRENT_PROFILE.role==='admin' ? `
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-outline btn-sm" onclick="setCourseStatus('${c.id}','rejete')">Rejeter</button>
-        <button class="btn btn-gold btn-sm" onclick="setCourseStatus('${c.id}','publie')">✓ Approuver et publier</button>
+        <button class="btn btn-gold btn-sm" onclick="setCourseStatus('${c.id}','publie')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg> Approuver et publier</button>
       </div>` : ''}
     </div>
   </div>` : ''}
@@ -1996,21 +1997,21 @@ function renderCourseDetail(){
         <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
           <span class="badge ${c.free?'badge-free':'badge-paid'}">${c.free?'Gratuit':'Payant'}</span>
           <span class="badge ${c.cat==='certificat'?'badge-certificat':'badge-diplome'}">${c.cat==='certificat'?'Programme Certificat':'Programme Diplôme'}</span>
-          <button class="wishlist-btn ${inWishlist?'active':''}" style="position:static;background:rgba(255,255,255,.15);color:#fff;" onclick="toggleWishlist(${c.id})">${inWishlist?'♥':'♡'}</button>
+          <button class="wishlist-btn ${inWishlist?'active':''}" style="position:static;background:rgba(255,255,255,.15);color:#fff;" onclick="toggleWishlist(${c.id})">${inWishlist?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M12 21s-7-4.4-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.6-9.5 9-9.5 9Z"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 21s-7-4.4-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.6-9.5 9-9.5 9Z"/></svg>'}</button>
         </div>
         <h1>${c.title}</h1>
         <p>${c.desc}</p>
         <div style="display:flex;gap:22px;margin-top:20px;flex-wrap:wrap;color:rgba(255,255,255,.8);font-size:13.5px;">
-          <span>★ ${c.rating} (${c.students.toLocaleString('fr-FR')} étudiants)</span>
+          <span><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6 6.6.6-5 4.4 1.5 6.5L12 16.8 6 20l1.5-6.5-5-4.4 6.6-.6L12 2.5Z"/></svg> ${c.rating} (${c.students.toLocaleString('fr-FR')} étudiants)</span>
           <span>⏱ ${c.duration}</span>
-          <span>🎯 Niveau : ${c.level}</span>
-          <span>🌐 ${c.lang}</span>
-          <a href="#" onclick="go('instructor-profile',{instructorName:'${c.instructor.replace(/'/g,"\\'")}'});return false;" style="color:#fff;text-decoration:underline;">👤 Formateur : ${c.instructor}</a>
+          <span><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg> Niveau : ${c.level}</span>
+          <span><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18Z"/></svg> ${c.lang}</span>
+          <a href="#" onclick="go('instructor-profile',{instructorName:'${c.instructor.replace(/'/g,"\\'")}'});return false;" style="color:#fff;text-decoration:underline;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg> Formateur : ${c.instructor}</a>
         </div>
       </div>
       <div class="course-side-card">
         <div class="video-frame">
-          <div class="play-btn">▶</div>
+          <div class="play-btn"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M6 4l14 8-14 8V4Z"/></svg></div>
         </div>
         <div style="font-size:26px;font-weight:800;font-family:'Sora',sans-serif;color:var(--navy-dark);margin-bottom:4px;">${fmtHTG(c.price)}</div>
         <p class="small-muted" style="margin:0 0 16px;">Accès complet + certificat à la réussite</p>
@@ -2018,10 +2019,10 @@ function renderCourseDetail(){
         <p class="small-muted" style="text-align:center;">Garantie satisfait ou remboursé sous 7 jours</p>
         <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px;">
           <p class="small-muted" style="margin:0 0 8px;"><b style="color:var(--text);">Ce cours comprend :</b></p>
-          <p class="small-muted" style="margin:4px 0;">📹 ${modules.length} modules vidéo</p>
-          <p class="small-muted" style="margin:4px 0;">📝 Quiz après chaque module</p>
-          <p class="small-muted" style="margin:4px 0;">🎓 Examen final / projet à soumettre</p>
-          <p class="small-muted" style="margin:4px 0;">📜 Certificat officiel JC Academy</p>
+          <p class="small-muted" style="margin:4px 0;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8.5 16 12l6 3.5v-7Z"/></svg> ${modules.length} modules vidéo</p>
+          <p class="small-muted" style="margin:4px 0;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/></svg> Quiz après chaque module</p>
+          <p class="small-muted" style="margin:4px 0;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></svg> Examen final / projet à soumettre</p>
+          <p class="small-muted" style="margin:4px 0;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 21l5-3 5 3-1.5-8.5"/></svg> Certificat officiel JC Academy</p>
         </div>
       </div>
     </div>
@@ -2047,32 +2048,32 @@ function renderCourseDetail(){
             <div class="module-num">${m.id}</div>
             <div>
               <h4>Module ${m.id} — ${m.title}</h4>
-              <div class="status">${!m.unlocked?'🔒 Module verrouillé':(m.quizDone?'✅ Terminé':(m.read?'▶ Vidéo disponible':'📖 Lecture requise'))}</div>
+              <div class="status">${!m.unlocked?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Module verrouillé':(m.quizDone?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg> Terminé':(m.read?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M6 4l14 8-14 8V4Z"/></svg> Vidéo disponible':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg> Lecture requise'))}</div>
             </div>
           </div>
-          <span>${state.openModule===m.id?'▲':'▼'}</span>
+          <span>${state.openModule===m.id?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M18 15 12 9l-6 6"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9l6 6 6-6"/></svg>'}</span>
         </div>
         <div class="module-body ${state.openModule===m.id?'open':''}">
           ${!m.unlocked ? `
-          <p class="locked-text" style="padding:6px 0;">🔒 Ce module se débloque après la réussite du quiz du module précédent.</p>
+          <p class="locked-text" style="padding:6px 0;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Ce module se débloque après la réussite du quiz du module précédent.</p>
           ` : `
           <div class="module-step">
-            <div class="step-icon ${m.read?'done':''}">${m.read?'✓':'📖'}</div>
+            <div class="step-icon ${m.read?'done':''}">${m.read?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg>'}</div>
             <div class="step-content">
               <h5>Partie théorique (lecture obligatoire)</h5>
               ${m.theory ? `<p style="white-space:pre-wrap;">${m.theory}</p>` : `<p>Support de cours détaillé à lire intégralement avant de continuer.</p>`}
-              ${!m.read? `<button class="btn btn-outline btn-sm" onclick="markTheoryRead('${c.id}','${m.dbId}')">${CURRENT_PROFILE?"J'ai terminé la lecture":'Se connecter pour continuer'}</button>` : `<span class="small-muted">✓ Lecture terminée</span>`}
+              ${!m.read? `<button class="btn btn-outline btn-sm" onclick="markTheoryRead('${c.id}','${m.dbId}')">${CURRENT_PROFILE?"J'ai terminé la lecture":'Se connecter pour continuer'}</button>` : `<span class="small-muted"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg> Lecture terminée</span>`}
             </div>
           </div>
           <div class="module-step">
-            <div class="step-icon ${m.quizUnlocked?'done':'locked'}">${m.quizUnlocked?'▶':'🔒'}</div>
+            <div class="step-icon ${m.quizUnlocked?'done':'locked'}">${m.quizUnlocked?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M6 4l14 8-14 8V4Z"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'}</div>
             <div class="step-content">
               <h5>Vidéo du module</h5>
               ${m.videoUnlocked ? `<p>Vidéo débloquée${m.videoUrl?'':' — durée estimée 22 min.'}</p><button class="btn btn-primary btn-sm" onclick="markVideoWatched('${c.id}','${m.dbId}',${m.videoUrl?`'${m.videoUrl}'`:'null'})">${m.quizUnlocked?'Revoir la vidéo':'Regarder la vidéo'}</button>` : `<p class="locked-text">Se débloque après la lecture de la partie théorique.</p>`}
             </div>
           </div>
           <div class="module-step">
-            <div class="step-icon ${m.quizDone?'done':(m.quizUnlocked?'':'locked')}">${m.quizDone?'✓':'❓'}</div>
+            <div class="step-icon ${m.quizDone?'done':(m.quizUnlocked?'':'locked')}">${m.quizDone?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7"/><path d="M12 17h.01"/></svg>'}</div>
             <div class="step-content">
               <h5>Quiz de fin de module</h5>
               ${m.quizDone ? `<p class="small-muted">Quiz réussi — score obtenu : ${m.quizScore!=null?m.quizScore+'%':'—'}</p>` : (m.quizUnlocked ? `<button class="btn btn-primary btn-sm" onclick="go('quiz',{courseId:'${c.id}',moduleId:'${m.dbId}',quizIndex:0,quizAnswers:{},quizSubmitted:false})">Commencer le quiz</button>` : `<p class="locked-text">Disponible après le visionnage de la vidéo.</p>`)}
@@ -2085,17 +2086,17 @@ function renderCourseDetail(){
       <div class="module" style="border-color:var(--gold);">
         <div class="module-head" style="background:#FFF8EA;">
           <div class="module-head-left">
-            <div class="module-num" style="background:var(--gold);color:var(--navy-dark);">🎓</div>
+            <div class="module-num" style="background:var(--gold);color:var(--navy-dark);"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></svg></div>
             <div>
               <h4>Examen final / Projet à soumettre</h4>
-              <div class="status">🔒 Se débloque après validation de tous les modules</div>
+              <div class="status"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Se débloque après validation de tous les modules</div>
             </div>
           </div>
         </div>
         <div class="module-body open" style="padding:18px 20px;">
           <p class="small-muted" style="margin:0 0 6px;">Une fois tous les modules complétés, vous devrez soumettre un projet final ou passer un examen évaluant l'ensemble des compétences acquises.</p>
           <p class="small-muted" style="margin:0;">⏳ Délai de correction : <b style="color:var(--text);">1 à 2 jours ouvrés</b></p>
-          <p class="small-muted" style="margin:4px 0 0;">📜 Délai de délivrance du certificat après demande : <b style="color:var(--text);">1 à 2 jours ouvrés</b></p>
+          <p class="small-muted" style="margin:4px 0 0;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 21l5-3 5 3-1.5-8.5"/></svg> Délai de délivrance du certificat après demande : <b style="color:var(--text);">1 à 2 jours ouvrés</b></p>
         </div>
       </div>
     </div>
@@ -2134,14 +2135,14 @@ function renderCourseDetail(){
       <div class="module" style="padding:20px;margin-bottom:26px;">
         <h4 style="margin:0 0 12px;font-size:15px;">Laisser un avis</h4>
         <div class="star-picker" id="reviewStarPicker">
-          ${[1,2,3,4,5].map(n=>`<span data-val="${n}" onclick="setReviewStars(${n})">★</span>`).join('')}
+          ${[1,2,3,4,5].map(n=>`<span data-val="${n}" onclick="setReviewStars(${n})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6 6.6.6-5 4.4 1.5 6.5L12 16.8 6 20l1.5-6.5-5-4.4 6.6-.6L12 2.5Z"/></svg></span>`).join('')}
         </div>
         <input type="hidden" id="reviewStarValue" value="0">
         <div class="field"><textarea id="reviewComment" rows="3" placeholder="Partagez votre expérience avec ce cours..."></textarea></div>
         <button class="btn btn-primary btn-sm" onclick="submitReview(${c.id})">Publier mon avis</button>
       </div>` : `
       <div class="module" style="padding:18px 20px;margin-bottom:26px;">
-        <p class="small-muted" style="margin:0;">🔒 <a href="#" onclick="go('login');return false;" style="color:var(--navy);font-weight:600;">Connectez-vous</a> pour laisser un avis sur ce cours.</p>
+        <p class="small-muted" style="margin:0;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> <a href="#" onclick="go('login');return false;" style="color:var(--navy);font-weight:600;">Connectez-vous</a> pour laisser un avis sur ce cours.</p>
       </div>`}
 
       ${reviews.map((r,idx)=>`
@@ -2254,7 +2255,7 @@ function renderRegister(){
 
       <div class="steps">
         ${[1,2,3].map(n=>`
-          <div class="step-dot ${step===n?'active':(step>n?'done':'')}">${step>n?'✓':n}</div>
+          <div class="step-dot ${step===n?'active':(step>n?'done':'')}">${step>n?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg>':n}</div>
           ${n<3?'<div class="step-line"></div>':''}
         `).join('')}
       </div>
@@ -2270,7 +2271,7 @@ function renderRegister(){
 
       ${step==='pending-confirm' ? `
       <div style="text-align:center;">
-        <p style="font-size:15px;margin-bottom:10px;">📩 Un e-mail de confirmation a été envoyé à<br><b>${state.regDraft.email}</b></p>
+        <p style="font-size:15px;margin-bottom:10px;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg> Un e-mail de confirmation a été envoyé à<br><b>${state.regDraft.email}</b></p>
         <p class="small-muted">Cliquez sur le lien reçu par e-mail pour activer votre compte. Vous serez automatiquement connecté à votre retour sur cette page.</p>
         <div id="resendStatus" class="hidden" style="margin:14px 0;padding:10px;background:#E4F7EE;border-radius:8px;color:var(--success);font-size:13px;"></div>
         <button class="btn btn-outline btn-block" style="margin-top:16px;" id="resendBtn" onclick="resendConfirmationEmail()">Renvoyer l'e-mail de confirmation</button>
@@ -2421,13 +2422,13 @@ function renderDashboard(){
   const recommended = COURSES.filter(c=>!ENROLLED.some(e=>e.courseId===c.id)).slice(0,3);
 
   const navItems = [
-    {id:'overview', icon:'🏠', label:"Vue d'ensemble"},
-    {id:'courses', icon:'📚', label:"Mes cours"},
-    {id:'wishlist', icon:'❤️', label:"Favoris"},
-    {id:'certificates', icon:'🎓', label:"Mes certificats"},
-    {id:'payments', icon:'🧾', label:"Paiements & factures"},
-    {id:'profile', icon:'👤', label:"Mon profil"},
-    {id:'settings', icon:'⚙️', label:"Paramètres"},
+    {id:'overview', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>', label:"Vue d'ensemble"},
+    {id:'courses', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg>', label:"Mes cours"},
+    {id:'wishlist', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M12 21s-7-4.4-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.6-9.5 9-9.5 9Z"/></svg>', label:"Favoris"},
+    {id:'certificates', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></svg>', label:"Mes certificats"},
+    {id:'payments', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 2h12v20l-3-2-3 2-3-2-3 2Z"/><path d="M9 7h6"/><path d="M9 11h6"/></svg>', label:"Paiements & factures"},
+    {id:'profile', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>', label:"Mon profil"},
+    {id:'settings', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1Z"/></svg>', label:"Paramètres"},
   ];
 
   return `
@@ -2439,14 +2440,14 @@ function renderDashboard(){
       </div>
       <nav class="dash-nav">
         ${navItems.map(n=>`<a href="#" class="${state.dashTab===n.id?'active':''}" onclick="state.dashTab='${n.id}';renderApp();return false;">${n.icon} ${n.label}</a>`).join('')}
-        <a href="#" class="logout" onclick="logout();return false;">🚪 Déconnexion</a>
+        <a href="#" class="logout" onclick="logout();return false;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Déconnexion</a>
       </nav>
     </aside>
 
     <div class="dash-main">
       ${state.dashTab==='overview' ? `
         <div class="dash-welcome">
-          <h2>Bon retour, ${state.currentUser.name} 👋</h2>
+          <h2>Bon retour, ${state.currentUser.name} <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg></h2>
           <p>Vous avez ${inProgress.length} cours en cours et ${completed.length} cours terminé${completed.length>1?'s':''}. Continuez sur votre lancée !</p>
         </div>
         <div class="dash-stats">
@@ -2459,7 +2460,7 @@ function renderDashboard(){
         <h3 style="font-size:17px;margin-bottom:14px;">Reprendre où vous en étiez</h3>
         ${inProgress.map(c=>`
           <div class="enrolled-card">
-            <div class="enrolled-thumb">📘</div>
+            <div class="enrolled-thumb"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg></div>
             <div class="enrolled-info">
               <h4>${c.title}</h4>
               <div class="progress-bar"><div style="width:${c.progress}%"></div></div>
@@ -2478,7 +2479,7 @@ function renderDashboard(){
         <h2 style="font-size:20px;margin-bottom:20px;">Mes cours</h2>
         ${enrolledCourses.map(c=>`
           <div class="enrolled-card">
-            <div class="enrolled-thumb">${c.progress===100?'✅':'📘'}</div>
+            <div class="enrolled-thumb">${c.progress===100?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg>'}</div>
             <div class="enrolled-info">
               <h4>${c.title}</h4>
               <div class="progress-bar"><div style="width:${c.progress}%"></div></div>
@@ -2493,7 +2494,7 @@ function renderDashboard(){
         <h2 style="font-size:20px;margin-bottom:20px;">Mes certificats</h2>
         ${completed.map(c=>`
           <div class="cert-card">
-            <div class="cert-icon">🎓</div>
+            <div class="cert-icon"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></svg></div>
             <div style="flex:1;">
               <h4 style="margin:0 0 3px;font-size:14.5px;">${c.title}</h4>
               <span class="small-muted">Certificat obtenu · Envoyé à ${state.currentUser.email}</span>
@@ -2502,7 +2503,7 @@ function renderDashboard(){
           </div>`).join('')}
         ${inProgress.map(c=>`
           <div class="cert-card">
-            <div class="cert-icon pending">🔒</div>
+            <div class="cert-icon pending"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
             <div style="flex:1;">
               <h4 style="margin:0 0 3px;font-size:14.5px;">${c.title}</h4>
               <span class="small-muted">Disponible après réussite de l'examen final (${c.progress}% complété)</span>
@@ -2513,7 +2514,7 @@ function renderDashboard(){
 
       ${state.dashTab==='wishlist' ? `
         <h2 style="font-size:20px;margin-bottom:20px;">Mes favoris</h2>
-        ${state.wishlist.length ? `<div class="course-grid">${COURSES.filter(c=>state.wishlist.includes(c.id)).map(courseCardHTML).join('')}</div>` : `<p class="small-muted">Vous n'avez pas encore ajouté de cours à vos favoris. Cliquez sur le cœur ♡ sur une carte de cours pour l'ajouter ici.</p>`}
+        ${state.wishlist.length ? `<div class="course-grid">${COURSES.filter(c=>state.wishlist.includes(c.id)).map(courseCardHTML).join('')}</div>` : `<p class="small-muted">Vous n'avez pas encore ajouté de cours à vos favoris. Cliquez sur le cœur <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 21s-7-4.4-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.6-9.5 9-9.5 9Z"/></svg> sur une carte de cours pour l'ajouter ici.</p>`}
       ` : ''}
 
       ${state.dashTab==='payments' ? `
@@ -2521,7 +2522,7 @@ function renderDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Référence</th><th>Cours</th><th>Date</th><th>Montant</th><th>Méthode</th><th>Statut</th><th></th></tr></thead>
           <tbody>
-            ${PAYMENTS.map(p=>`<tr><td>${p.id}</td><td>${p.course}</td><td>${p.date}</td><td>${p.amount? (String(p.method).includes('USD')?fmtUSD(p.amount):fmtHTG(p.amount)) :'—'}</td><td>${p.method}</td><td><span class="status-pill ${p.status==='Payé'?'ok':'pending'}">${p.status}</span></td><td>${p.status==='Payé'?`<button class="icon-btn" title="Télécharger le reçu" onclick="downloadReceiptById('${p.id}')">⬇</button>`:''}</td></tr>`).join('')}
+            ${PAYMENTS.map(p=>`<tr><td>${p.id}</td><td>${p.course}</td><td>${p.date}</td><td>${p.amount? (String(p.method).includes('USD')?fmtUSD(p.amount):fmtHTG(p.amount)) :'—'}</td><td>${p.method}</td><td><span class="status-pill ${p.status==='Payé'?'ok':'pending'}">${p.status}</span></td><td>${p.status==='Payé'?`<button class="icon-btn" title="Télécharger le reçu" onclick="downloadReceiptById('${p.id}')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg></button>`:''}</td></tr>`).join('')}
           </tbody>
         </table></div>
         ${!PAYMENTS.length?`<p class="small-muted">Aucune transaction pour le moment.</p>`:''}
@@ -2567,19 +2568,19 @@ function renderCheckout(){
       <div>
         <h3 style="font-size:16px;margin-bottom:10px;">Choisissez une devise</h3>
         <div class="pay-method" style="margin-bottom:6px;">
-          <button class="${currency==='htg'?'active':''}" onclick="state.payCurrency='htg';state.payMethod='moncash';renderApp();">🇭🇹 Payer en Gourdes (HTG)</button>
-          <button class="${currency==='usd'?'active':''}" onclick="state.payCurrency='usd';state.payMethod='card';renderApp();">💵 Payer en Dollars (USD)</button>
+          <button class="${currency==='htg'?'active':''}" onclick="state.payCurrency='htg';state.payMethod='moncash';renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="4" width="20" height="7" fill="#00209F"/><rect x="2" y="11" width="20" height="7" fill="#D21034"/></svg> Payer en Gourdes (HTG)</button>
+          <button class="${currency==='usd'?'active':''}" onclick="state.payCurrency='usd';state.payMethod='card';renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M9.5 15c.5 1 1.5 1.5 2.7 1.5 1.6 0 2.8-.9 2.8-2.1 0-1.4-1.2-1.9-2.9-2.3-1.7-.4-2.9-.9-2.9-2.3 0-1.2 1.2-2.1 2.8-2.1 1.2 0 2.2.5 2.7 1.5"/><path d="M12 6.5v11"/></svg> Payer en Dollars (USD)</button>
         </div>
         <p class="small-muted" style="margin-bottom:22px;">Taux indicatif : 1 $ USD ≈ ${EXCHANGE_RATE} HTG</p>
 
         <h3 style="font-size:16px;">Mode de paiement</h3>
         <div class="pay-method">
           ${currency==='htg' ? `
-            <button class="${state.payMethod==='moncash'?'active':''}" onclick="state.payMethod='moncash';renderApp();">📱 MonCash</button>
-            <button class="${state.payMethod==='natcash'?'active':''}" onclick="state.payMethod='natcash';renderApp();">📱 NatCash</button>
+            <button class="${state.payMethod==='moncash'?'active':''}" onclick="state.payMethod='moncash';renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 4h4l1.5 5-2.5 1.5a12 12 0 0 0 6 6l1.5-2.5 5 1.5v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg> MonCash</button>
+            <button class="${state.payMethod==='natcash'?'active':''}" onclick="state.payMethod='natcash';renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 4h4l1.5 5-2.5 1.5a12 12 0 0 0 6 6l1.5-2.5 5 1.5v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg> NatCash</button>
           ` : `
-            <button class="${state.payMethod==='card'?'active':''}" onclick="state.payMethod='card';renderApp();">💳 Carte bancaire</button>
-            <button class="${state.payMethod==='paypal'?'active':''}" onclick="state.payMethod='paypal';renderApp();">🅿️ PayPal</button>
+            <button class="${state.payMethod==='card'?'active':''}" onclick="state.payMethod='card';renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Carte bancaire</button>
+            <button class="${state.payMethod==='paypal'?'active':''}" onclick="state.payMethod='paypal';renderApp();">🅿 PayPal</button>
           `}
         </div>
 
@@ -2605,12 +2606,12 @@ function renderCheckout(){
         ` : ''}
         <div class="field"><label>E-mail de facturation</label><input type="email" value="${state.currentUser.email}"></div>
         <button class="btn btn-primary btn-block" onclick="payAndEnroll(${c.id})">Payer ${currency==='htg'?fmtHTG(c.price):fmtUSD(c.price)}</button>
-        <p class="small-muted" style="text-align:center;margin-top:10px;">🔒 Paiement chiffré et sécurisé.</p>
+        <p class="small-muted" style="text-align:center;margin-top:10px;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Paiement chiffré et sécurisé.</p>
       </div>
       <div class="order-summary">
         <h4 style="margin-top:0;">Récapitulatif</h4>
         <div style="display:flex;gap:12px;margin-bottom:16px;">
-          <div class="enrolled-thumb">📘</div>
+          <div class="enrolled-thumb"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg></div>
           <div><b style="font-size:13.5px;">${c.title}</b><div class="small-muted">${c.instructor} · ${c.duration}</div></div>
         </div>
         <div class="order-row"><span>Prix du cours</span><span>${fmtUSD(c.price)} · ${fmtHTG(c.price)}</span></div>
@@ -2654,9 +2655,9 @@ function renderCertificateRequest(){
       <p class="sub">${c.title}</p>
       <div class="field"><label>Nom complet à afficher sur le certificat</label><input type="text" id="certName" value="${state.currentUser.name}"></div>
       <div class="field"><label>E-mail de réception</label><input type="email" id="certEmail" value="${state.currentUser.email}"></div>
-      <p class="small-muted" style="margin-bottom:20px;">📩 Votre certificat officiel sera envoyé au format PDF à l'adresse e-mail indiquée ci-dessus, dans un délai de 1 à 2 jours ouvrés après validation.</p>
+      <p class="small-muted" style="margin-bottom:20px;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg> Votre certificat officiel sera envoyé au format PDF à l'adresse e-mail indiquée ci-dessus, dans un délai de 1 à 2 jours ouvrés après validation.</p>
       <button class="btn btn-gold btn-block" id="certSubmitBtn" onclick="submitCertRequest(${JSON.stringify(c.id)})">Envoyer ma demande</button>
-      <div id="certConfirm" class="hidden" style="margin-top:18px;padding:14px;background:#E4F7EE;border-radius:10px;color:var(--success);font-size:13.5px;text-align:center;">✅ Demande envoyée ! Votre certificat sera transmis par e-mail sous 1 à 2 jours ouvrés.</div>
+      <div id="certConfirm" class="hidden" style="margin-top:18px;padding:14px;background:#E4F7EE;border-radius:10px;color:var(--success);font-size:13.5px;text-align:center;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg> Demande envoyée ! Votre certificat sera transmis par e-mail sous 1 à 2 jours ouvrés.</div>
       <p class="auth-switch"><a href="#" onclick="go('dashboard',{dashTab:'certificates'});return false;">Retour à mes certificats</a></p>
     </div>
   </div>`;
@@ -2698,7 +2699,7 @@ function renderQuiz(){
       <div class="quiz-shell">
         <div class="quiz-result">
           <div class="score-circle"><b>${pct}%</b><span class="small-muted">Score</span></div>
-          <h2>${pct>=60 ? 'Quiz réussi ! 🎉' : 'Quiz non validé'}</h2>
+          <h2>${pct>=60 ? 'Quiz réussi ! <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5.5 19 3 21"/><path d="M14 3l1.5 1.5"/><path d="M18 7l1.5 1.5"/><path d="M4 15l14-9-5 14L9 15 4 15Z"/></svg>' : 'Quiz non validé'}</h2>
           <p class="small-muted">${score} bonnes réponses sur ${total}. ${pct>=60 ? 'Le module suivant est maintenant débloqué.' : 'Revisionnez la vidéo puis retentez le quiz.'}</p>
           <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
             <button class="btn btn-outline" onclick="go('course-detail',{courseId:'${c.id}'})">Retour au cours</button>
@@ -2759,7 +2760,7 @@ function renderForgotPassword(){
       <p class="sub">Entrez votre e-mail ou numéro de téléphone, nous vous enverrons un lien de réinitialisation.</p>
       <div class="field"><label>E-mail ou téléphone</label><input type="text" placeholder="vous@exemple.com ou 07 00 00 00 00"></div>
       <button class="btn btn-primary btn-block" onclick="document.getElementById('fpConfirm').classList.remove('hidden')">Envoyer le lien de réinitialisation</button>
-      <div id="fpConfirm" class="hidden" style="margin-top:18px;padding:14px;background:#E4F7EE;border-radius:10px;color:var(--success);font-size:13.5px;text-align:center;">✅ Lien envoyé ! Vérifiez votre boîte de réception.</div>
+      <div id="fpConfirm" class="hidden" style="margin-top:18px;padding:14px;background:#E4F7EE;border-radius:10px;color:var(--success);font-size:13.5px;text-align:center;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg> Lien envoyé ! Vérifiez votre boîte de réception.</div>
       <p class="auth-switch">Vous vous souvenez de votre mot de passe ? <a href="#" onclick="go('login');return false;">Se connecter</a></p>
     </div>
   </div>`;
@@ -2780,10 +2781,10 @@ function renderContact(){
       <div>
         <h3 style="font-size:18px;">Nos coordonnées</h3>
         <div class="step-list">
-          <div class="step-item"><div class="num">✉️</div><div><h4>E-mail</h4><p>${SITE_CONTENT.contactEmail}</p></div></div>
-          <div class="step-item"><div class="num">📞</div><div><h4>Téléphone</h4><p>${SITE_CONTENT.contactPhone}${SITE_CONTENT.contactPhone2 ? '<br>' + SITE_CONTENT.contactPhone2 : ''}</p></div></div>
-          <div class="step-item"><div class="num">📍</div><div><h4>Adresse</h4><p>${SITE_CONTENT.contactAddress}</p></div></div>
-          <div class="step-item"><div class="num">🕒</div><div><h4>Horaires</h4><p>${SITE_CONTENT.contactHours}</p></div></div>
+          <div class="step-item"><div class="num"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg></div><div><h4>E-mail</h4><p>${SITE_CONTENT.contactEmail}</p></div></div>
+          <div class="step-item"><div class="num"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 4h4l1.5 5-2.5 1.5a12 12 0 0 0 6 6l1.5-2.5 5 1.5v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg></div><div><h4>Téléphone</h4><p>${SITE_CONTENT.contactPhone}${SITE_CONTENT.contactPhone2 ? '<br>' + SITE_CONTENT.contactPhone2 : ''}</p></div></div>
+          <div class="step-item"><div class="num"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></svg></div><div><h4>Adresse</h4><p>${SITE_CONTENT.contactAddress}</p></div></div>
+          <div class="step-item"><div class="num"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div><div><h4>Horaires</h4><p>${SITE_CONTENT.contactHours}</p></div></div>
         </div>
       </div>
       <div class="auth-card" style="margin:0;">
@@ -2877,7 +2878,7 @@ function renderInstructorProfile(){
     <div style="max-width:700px;margin-bottom:36px;">
       <h3>À propos</h3>
       <p style="color:var(--text-muted);line-height:1.7;">${instr.bio} Passionné(e) par la transmission du savoir, ${instr.name.split(' ')[0]} accompagne ses étudiants avec des méthodes pédagogiques concrètes et un suivi personnalisé.</p>
-      <button class="btn btn-outline btn-sm" onclick="alert('Message envoyé (démo)')">✉️ Contacter ce formateur</button>
+      <button class="btn btn-outline btn-sm" onclick="alert('Message envoyé (démo)')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg> Contacter ce formateur</button>
     </div>
     <h3>Cours proposés (${taught.length})</h3>
     <div class="course-grid">${taught.map(courseCardHTML).join('') || '<p class="small-muted">Aucun cours publié pour le moment.</p>'}</div>
@@ -2921,7 +2922,7 @@ function renderArticleDetail(){
     <a href="#" onclick="go('home');return false;" style="font-size:13px;color:var(--text-muted);">&larr; Retour à l'accueil</a>
     <span class="article-tag" style="margin:18px 0 10px;display:inline-block;">${a.tag}</span>
     <h1 style="font-size:28px;margin:0 0 10px;">${a.title}</h1>
-    <p class="small-muted" style="margin-bottom:24px;">✍️ ${a.author} · ${a.date}</p>
+    <p class="small-muted" style="margin-bottom:24px;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> ${a.author} · ${a.date}</p>
     <div class="article-thumb" style="height:220px;border-radius:16px;font-size:52px;${a.image?`background-image:url('${a.image}');background-size:cover;background-position:center;`:`background:linear-gradient(135deg, ${palette[a.color%palette.length]} 0%, var(--navy-dark) 100%);`}margin-bottom:26px;">${a.image?'':a.icon}</div>
     ${a.content ? `<div class="article-body-content">${a.content}</div>` : `<p style="color:var(--text-muted);line-height:1.8;font-size:15px;">${a.excerpt}</p>`}
     <button class="btn btn-outline" style="margin-top:24px;" onclick="go('home')">Voir plus d'articles</button>
@@ -2948,14 +2949,14 @@ function renderTeacherDashboard(){
   const teacherName = CURRENT_PROFILE ? CURRENT_PROFILE.full_name : state.currentUser.name;
   const myCourses = MY_COURSES;
   const navItems = [
-    {id:'overview', icon:'🏠', label:"Vue d'ensemble"},
-    {id:'my-courses', icon:'📚', label:"Mes cours"},
-    {id:'create-course', icon:'➕', label:"Créer un cours"},
-    {id:'students', icon:'🧑‍🎓', label:"Étudiants"},
-    {id:'revenue', icon:'💰', label:"Revenus"},
-    {id:'reviews', icon:'⭐', label:"Avis reçus"},
-    {id:'profile', icon:'👤', label:"Mon profil public"},
-    {id:'payments', icon:'💳', label:"Recevoir mes paiements"},
+    {id:'overview', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>', label:"Vue d'ensemble"},
+    {id:'my-courses', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg>', label:"Mes cours"},
+    {id:'create-course', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 5v14"/><path d="M5 12h14"/></svg>', label:"Créer un cours"},
+    {id:'students', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></svg>', label:"Étudiants"},
+    {id:'revenue', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M9.5 15c.5 1 1.5 1.5 2.7 1.5 1.6 0 2.8-.9 2.8-2.1 0-1.4-1.2-1.9-2.9-2.3-1.7-.4-2.9-.9-2.9-2.3 0-1.2 1.2-2.1 2.8-2.1 1.2 0 2.2.5 2.7 1.5"/><path d="M12 6.5v11"/></svg>', label:"Revenus"},
+    {id:'reviews', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6 6.6.6-5 4.4 1.5 6.5L12 16.8 6 20l1.5-6.5-5-4.4 6.6-.6L12 2.5Z"/></svg>', label:"Avis reçus"},
+    {id:'profile', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>', label:"Mon profil public"},
+    {id:'payments', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>', label:"Recevoir mes paiements"},
   ];
   return `
   <div class="dash-shell">
@@ -2966,13 +2967,13 @@ function renderTeacherDashboard(){
       </div>
       <nav class="dash-nav">
         ${navItems.map(n=>`<a href="#" class="${state.teacherTab===n.id?'active':''}" onclick="state.teacherTab='${n.id}';renderApp();return false;">${n.icon} ${n.label}</a>`).join('')}
-        <a href="#" onclick="go('dashboard');return false;">🔁 Passer en vue étudiant</a>
-        <a href="#" class="logout" onclick="logout();return false;">🚪 Déconnexion</a>
+        <a href="#" onclick="go('dashboard');return false;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Passer en vue étudiant</a>
+        <a href="#" class="logout" onclick="logout();return false;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Déconnexion</a>
       </nav>
     </aside>
     <div class="dash-main">
       ${state.teacherTab==='overview' ? `
-        <div class="dash-welcome"><h2>Bienvenue, ${teacherName.split(' ')[0]} 👋</h2><p>Voici un aperçu de vos formations et de vos étudiants.</p></div>
+        <div class="dash-welcome"><h2>Bienvenue, ${teacherName.split(' ')[0]} <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/></svg></h2><p>Voici un aperçu de vos formations et de vos étudiants.</p></div>
         <div class="dash-stats">
           <div class="dash-stat-card"><b>${myCourses.length}</b><span>Cours (tous statuts)</span></div>
           <div class="dash-stat-card"><b>${TEACHER_STUDENTS.length}</b><span>Étudiants inscrits</span></div>
@@ -2982,8 +2983,8 @@ function renderTeacherDashboard(){
         <h3 style="font-size:17px;margin-bottom:14px;">Mes cours</h3>
         ${myCourses.length ? myCourses.map(c=>`
           <div class="enrolled-card">
-            <div class="enrolled-thumb">📘</div>
-            <div class="enrolled-info"><h4>${c.title}</h4><span class="small-muted">${c.students?c.students.toLocaleString('fr-FR'):0} étudiants · ★ ${c.rating||'—'} · <span class="status-pill ${c.status==='publie'?'ok':(c.status==='rejete'?'blocked':'pending')}" style="margin-left:4px;">${c.status==='publie'?'Publié':(c.status==='rejete'?'Rejeté':'En attente')}</span></span></div>
+            <div class="enrolled-thumb"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg></div>
+            <div class="enrolled-info"><h4>${c.title}</h4><span class="small-muted">${c.students?c.students.toLocaleString('fr-FR'):0} étudiants · <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6 6.6.6-5 4.4 1.5 6.5L12 16.8 6 20l1.5-6.5-5-4.4 6.6-.6L12 2.5Z"/></svg> ${c.rating||'—'} · <span class="status-pill ${c.status==='publie'?'ok':(c.status==='rejete'?'blocked':'pending')}" style="margin-left:4px;">${c.status==='publie'?'Publié':(c.status==='rejete'?'Rejeté':'En attente')}</span></span></div>
             <button class="btn btn-outline btn-sm" onclick="go('course-detail',{courseId:'${c.id}'})">Voir</button>
           </div>`).join('') : `<p class="small-muted">Vous n'avez pas encore créé de cours.</p>`}
       ` : ''}
@@ -2993,7 +2994,7 @@ function renderTeacherDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Titre</th><th>Catégorie</th><th>Prix</th><th>Étudiants</th><th>Statut</th><th></th></tr></thead>
           <tbody>
-            ${myCourses.map(c=>`<tr><td>${c.title}</td><td>${c.cat==='certificat'?'Certificat':'Diplôme'}</td><td>${fmtHTG(c.price)}</td><td>${c.students||0}</td><td><span class="status-pill ${c.status==='publie'?'ok':(c.status==='rejete'?'blocked':'pending')}">${c.status==='publie'?'Publié':(c.status==='rejete'?'Rejeté':'En attente')}</span></td><td><button class="icon-btn" onclick="go('course-detail',{courseId:'${c.id}'})">✎</button></td></tr>`).join('')}
+            ${myCourses.map(c=>`<tr><td>${c.title}</td><td>${c.cat==='certificat'?'Certificat':'Diplôme'}</td><td>${fmtHTG(c.price)}</td><td>${c.students||0}</td><td><span class="status-pill ${c.status==='publie'?'ok':(c.status==='rejete'?'blocked':'pending')}">${c.status==='publie'?'Publié':(c.status==='rejete'?'Rejeté':'En attente')}</span></td><td><button class="icon-btn" onclick="go('course-detail',{courseId:'${c.id}'})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3001,7 +3002,7 @@ function renderTeacherDashboard(){
       ${state.teacherTab==='create-course' ? `
         <h2 style="font-size:20px;margin-bottom:6px;">Créer un nouveau cours</h2>
         <div class="steps" style="justify-content:flex-start;margin-bottom:24px;">
-          <div class="step-dot ${state.courseBuilderStep===1?'active':(state.courseBuilderStep>1?'done':'')}">${state.courseBuilderStep>1?'✓':1}</div>
+          <div class="step-dot ${state.courseBuilderStep===1?'active':(state.courseBuilderStep>1?'done':'')}">${state.courseBuilderStep>1?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg>':1}</div>
           <div class="step-line"></div>
           <div class="step-dot ${state.courseBuilderStep===2?'active':''}">2</div>
           <span class="small-muted" style="margin-left:14px;">${state.courseBuilderStep===1?"Étape 1 — Informations générales":"Étape 2 — Modules, théorie, vidéo et quiz"}</span>
@@ -3026,8 +3027,8 @@ function renderTeacherDashboard(){
           ${state.builderModules.length===0?`<p class="small-muted" style="margin-bottom:16px;">Aucun module pour l'instant. Ajoutez votre premier module ci-dessous.</p>`:''}
           ${state.builderModules.map((m,idx)=>`
             <div class="builder-module-card">
-              <div><b style="font-size:13.5px;">Module ${idx+1} — ${m.title}</b><div class="small-muted">${m.theory?'📖 Texte ✓':'📖 Sans texte'} · ${m.videoUrl?'🎬 Vidéo ✓':'🎬 Sans vidéo'} · ❓ ${m.quiz.length} question(s)</div></div>
-              <button class="icon-btn danger" onclick="removeBuilderModule(${idx})">🗑</button>
+              <div><b style="font-size:13.5px;">Module ${idx+1} — ${m.title}</b><div class="small-muted">${m.theory?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg> Texte <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg> Sans texte'} · ${m.videoUrl?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8.5 16 12l6 3.5v-7Z"/></svg> Vidéo <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8.5 16 12l6 3.5v-7Z"/></svg> Sans vidéo'} · <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7"/><path d="M12 17h.01"/></svg> ${m.quiz.length} question(s)</div></div>
+              <button class="icon-btn danger" onclick="removeBuilderModule(${idx})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>
             </div>`).join('')}
 
           ${!state.showModuleEditor ? `
@@ -3049,7 +3050,7 @@ function renderTeacherDashboard(){
                   <input type="radio" name="qz_${qi}_correct" value="${oi}" ${q.correct===oi?'checked':''}>
                   <input type="text" id="qz_${qi}_opt${oi}" value="${(q.options&&q.options[oi])||''}" placeholder="Option ${String.fromCharCode(65+oi)}">
                 </div>`).join('')}
-                <button class="icon-btn danger" onclick="removeQuizQuestion(${qi})">🗑 Retirer cette question</button>
+                <button class="icon-btn danger" onclick="removeQuizQuestion(${qi})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg> Retirer cette question</button>
               </div>`).join('')}
             </div>
             <button class="btn btn-outline btn-sm" onclick="addQuizQuestion()">+ Ajouter une question</button>
@@ -3222,19 +3223,19 @@ async function createTeacherCourse(){
 function renderAdminDashboard(){
   const adminName = CURRENT_PROFILE ? CURRENT_PROFILE.full_name : 'Administrateur';
   const navItems = [
-    {id:'overview', icon:'🏠', label:"Vue d'ensemble"},
-    {id:'content', icon:'📝', label:"Contenu du site"},
-    {id:'courses', icon:'📚', label:"Cours"},
-    {id:'articles', icon:'📰', label:"Articles"},
-    {id:'news', icon:'📢', label:"Actualités"},
-    {id:'gallery', icon:'🖼️', label:"Galerie"},
-    {id:'products', icon:'🛍️', label:"Produits numériques"},
-    {id:'pages', icon:'📄', label:"Pages"},
-    {id:'teachers', icon:'🧑‍🏫', label:"Formateurs"},
-    {id:'users', icon:'👥', label:"Utilisateurs"},
-    {id:'profile', icon:'👤', label:"Mon profil"},
-    {id:'payments', icon:'💳', label:"Recevoir mes paiements"},
-    {id:'settings', icon:'⚙️', label:"Paramètres du site"},
+    {id:'overview', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>', label:"Vue d'ensemble"},
+    {id:'content', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/></svg>', label:"Contenu du site"},
+    {id:'courses', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg>', label:"Cours"},
+    {id:'articles', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="5" width="14" height="14" rx="1"/><path d="M17 8h4v9a2 2 0 0 1-2 2H9"/><path d="M7 9h6"/><path d="M7 13h6"/><path d="M7 17h4"/></svg>', label:"Articles"},
+    {id:'news', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 10v4a1 1 0 0 0 1 1h2l7 4V5L6 9H4a1 1 0 0 0-1 1Z"/><path d="M17 8a4 4 0 0 1 0 8"/></svg>', label:"Actualités"},
+    {id:'gallery', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5.5-5.5L5 21"/></svg>', label:"Galerie"},
+    {id:'products', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 8h12l-1 13H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>', label:"Produits numériques"},
+    {id:'pages', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/></svg>', label:"Pages"},
+    {id:'teachers', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>', label:"Formateurs"},
+    {id:'users', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16.5 6.2a3.2 3.2 0 0 1 0 6.2"/><path d="M15.5 14.2a6.5 6.2 0 0 1 6 5.8"/></svg>', label:"Utilisateurs"},
+    {id:'profile', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>', label:"Mon profil"},
+    {id:'payments', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>', label:"Recevoir mes paiements"},
+    {id:'settings', icon:'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1Z"/></svg>', label:"Paramètres du site"},
   ];
   return `
   <div class="dash-shell">
@@ -3245,8 +3246,8 @@ function renderAdminDashboard(){
       </div>
       <nav class="dash-nav">
         ${navItems.map(n=>`<a href="#" class="${state.adminTab===n.id?'active':''}" onclick="state.adminTab='${n.id}';renderApp();return false;">${n.icon} ${n.label}</a>`).join('')}
-        <a href="#" onclick="go('home');return false;">🔁 Retour au site</a>
-        <a href="#" class="logout" onclick="logout();return false;">🚪 Déconnexion</a>
+        <a href="#" onclick="go('home');return false;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Retour au site</a>
+        <a href="#" class="logout" onclick="logout();return false;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Déconnexion</a>
       </nav>
     </aside>
     <div class="dash-main">
@@ -3262,7 +3263,7 @@ function renderAdminDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Nom</th><th>Domaine</th><th>Date</th><th>Statut</th><th></th></tr></thead>
           <tbody>
-            ${ADMIN_TEACHER_APPS.map(a=>`<tr><td>${a.name}</td><td>${a.domain}</td><td>${a.date}</td><td><span class="status-pill ${a.status==='Approuvé'?'ok':'pending'}">${a.status}</span></td><td>${a.status==='En attente'?`<button class="icon-btn" onclick="approveTeacherApplication('${a.id}')">✓</button>`:''}</td></tr>`).join('')}
+            ${ADMIN_TEACHER_APPS.map(a=>`<tr><td>${a.name}</td><td>${a.domain}</td><td>${a.date}</td><td><span class="status-pill ${a.status==='Approuvé'?'ok':'pending'}">${a.status}</span></td><td>${a.status==='En attente'?`<button class="icon-btn" onclick="approveTeacherApplication('${a.id}')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg></button>`:''}</td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3326,7 +3327,7 @@ function renderAdminDashboard(){
           <tbody id="adminCoursesTbody">
             ${ADMIN_COURSES.map(c=>`<tr><td>${c.title}</td><td>${c.cat==='certificat'?'Certificat':'Diplôme'}</td><td>${fmtHTG(c.price)}</td><td>${c.instructor}</td>
             <td><span class="status-pill ${c.status==='publie'?'ok':(c.status==='rejete'?'blocked':'pending')}">${c.status==='publie'?'Publié':(c.status==='rejete'?'Rejeté':'En attente')}</span></td>
-            <td><button class="icon-btn" onclick="go('course-detail',{courseId:'${c.id}'})">👁</button> <button class="icon-btn" onclick="state.editing={type:'course',id:'${c.id}'};renderApp();">✎</button> <button class="icon-btn danger" onclick="adminDeleteCourse('${c.id}')">🗑</button></td></tr>`).join('')}
+            <td><button class="icon-btn" onclick="go('course-detail',{courseId:'${c.id}'})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button> <button class="icon-btn" onclick="state.editing={type:'course',id:'${c.id}'};renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button> <button class="icon-btn danger" onclick="adminDeleteCourse('${c.id}')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button></td></tr>`).join('')}
           </tbody>
         </table></div>` : ''}
       ` : ''}
@@ -3352,7 +3353,7 @@ function renderAdminDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Titre</th><th>Catégorie</th><th>Auteur</th><th>Date</th><th></th></tr></thead>
           <tbody id="adminArticlesTbody">
-            ${ARTICLES.map(a=>`<tr><td>${a.title}</td><td>${a.tag}</td><td>${a.author}</td><td>${a.date}</td><td><button class="icon-btn" onclick="go('article-detail',{articleId:'${a.id}'})">👁</button> <button class="icon-btn" onclick="state.editing={type:'article',id:'${a.id}'};renderApp();">✎</button> <button class="icon-btn danger" onclick="adminDeleteArticle('${a.id}')">🗑</button></td></tr>`).join('')}
+            ${ARTICLES.map(a=>`<tr><td>${a.title}</td><td>${a.tag}</td><td>${a.author}</td><td>${a.date}</td><td><button class="icon-btn" onclick="go('article-detail',{articleId:'${a.id}'})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button> <button class="icon-btn" onclick="state.editing={type:'article',id:'${a.id}'};renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button> <button class="icon-btn danger" onclick="adminDeleteArticle('${a.id}')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button></td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3376,7 +3377,7 @@ function renderAdminDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Titre</th><th>Date</th><th></th></tr></thead>
           <tbody id="adminNewsTbody">
-            ${NEWS.map(n=>`<tr><td>${n.title}</td><td>${n.date}</td><td><button class="icon-btn" onclick="go('news-detail',{newsId:'${n.id}'})">👁</button> <button class="icon-btn" onclick="state.editing={type:'news',id:'${n.id}'};renderApp();">✎</button> <button class="icon-btn danger" onclick="adminDeleteNews('${n.id}')">🗑</button></td></tr>`).join('')}
+            ${NEWS.map(n=>`<tr><td>${n.title}</td><td>${n.date}</td><td><button class="icon-btn" onclick="go('news-detail',{newsId:'${n.id}'})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button> <button class="icon-btn" onclick="state.editing={type:'news',id:'${n.id}'};renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button> <button class="icon-btn danger" onclick="adminDeleteNews('${n.id}')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button></td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3399,7 +3400,7 @@ function renderAdminDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Titre</th><th>Description</th><th></th></tr></thead>
           <tbody id="adminGalleryTbody">
-            ${GALLERY.map((g,idx)=>`<tr><td>${g.title}</td><td>${g.desc}</td><td><button class="icon-btn" onclick="state.editing={type:'gallery',id:${idx}};renderApp();">✎</button> <button class="icon-btn danger" onclick="adminDeleteGallery(${idx})">🗑</button></td></tr>`).join('')}
+            ${GALLERY.map((g,idx)=>`<tr><td>${g.title}</td><td>${g.desc}</td><td><button class="icon-btn" onclick="state.editing={type:'gallery',id:${idx}};renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button> <button class="icon-btn danger" onclick="adminDeleteGallery(${idx})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button></td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3431,7 +3432,7 @@ function renderAdminDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Titre</th><th>Prix</th><th>Statut</th><th></th></tr></thead>
           <tbody>
-            ${ADMIN_PRODUCTS.map(p=>`<tr><td>${p.title}</td><td>${fmtHTG(Number(p.price_usd))}</td><td><span class="status-pill ${p.status==='publie'?'ok':'pending'}">${p.status==='publie'?'Publié':'Brouillon'}</span></td><td><button class="icon-btn" onclick="state.editing={type:'product',id:'${p.id}'};renderApp();">✎</button> <button class="icon-btn danger" onclick="adminDeleteProduct('${p.id}')">🗑</button></td></tr>`).join('')}
+            ${ADMIN_PRODUCTS.map(p=>`<tr><td>${p.title}</td><td>${fmtHTG(Number(p.price_usd))}</td><td><span class="status-pill ${p.status==='publie'?'ok':'pending'}">${p.status==='publie'?'Publié':'Brouillon'}</span></td><td><button class="icon-btn" onclick="state.editing={type:'product',id:'${p.id}'};renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button> <button class="icon-btn danger" onclick="adminDeleteProduct('${p.id}')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button></td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3457,7 +3458,7 @@ function renderAdminDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Titre</th><th>Slug</th><th>Statut</th><th></th></tr></thead>
           <tbody id="adminPagesTbody">
-            ${ADMIN_PAGES.map(p=>`<tr><td>${p.title}</td><td>${p.slug}</td><td><span class="status-pill ${p.status==='Publiée'?'ok':'pending'}">${p.status}</span></td><td><button class="icon-btn" onclick="state.editing={type:'page',id:'${p.id}'};renderApp();">✎</button> <button class="icon-btn danger" onclick="adminDeletePage('${p.id}')">🗑</button></td></tr>`).join('')}
+            ${ADMIN_PAGES.map(p=>`<tr><td>${p.title}</td><td>${p.slug}</td><td><span class="status-pill ${p.status==='Publiée'?'ok':'pending'}">${p.status}</span></td><td><button class="icon-btn" onclick="state.editing={type:'page',id:'${p.id}'};renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button> <button class="icon-btn danger" onclick="adminDeletePage('${p.id}')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button></td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3467,7 +3468,7 @@ function renderAdminDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Nom</th><th>Spécialité</th><th>Cours publiés</th><th></th></tr></thead>
           <tbody>
-            ${INSTRUCTORS.map(i=>`<tr><td>${i.name}</td><td>${i.role}</td><td>${COURSES.filter(c=>c.instructor===i.name).length}</td><td><button class="icon-btn" onclick="go('instructor-profile',{instructorName:'${i.name.replace(/'/g,"\\'")}'})">👁</button> <button class="icon-btn danger" onclick="adminDeleteUser('${i.profileId}','${i.name.replace(/'/g,"\\'")}')">🗑</button></td></tr>`).join('')}
+            ${INSTRUCTORS.map(i=>`<tr><td>${i.name}</td><td>${i.role}</td><td>${COURSES.filter(c=>c.instructor===i.name).length}</td><td><button class="icon-btn" onclick="go('instructor-profile',{instructorName:'${i.name.replace(/'/g,"\\'")}'})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button> <button class="icon-btn danger" onclick="adminDeleteUser('${i.profileId}','${i.name.replace(/'/g,"\\'")}')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button></td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3477,7 +3478,7 @@ function renderAdminDashboard(){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Nom</th><th>Rôle</th><th>Statut</th><th>Inscrit le</th><th></th></tr></thead>
           <tbody>
-            ${ADMIN_USERS.map(u=>`<tr><td>${u.name}</td><td>${u.role}</td><td><span class="status-pill ${u.status==='Actif'?'ok':'blocked'}">${u.status}</span></td><td>${u.joined}</td><td>${u.role!=='Admin'?`<button class="icon-btn danger" onclick="adminDeleteUser('${u.id}','${u.name.replace(/'/g,"\\'")}')">🗑</button>`:''}</td></tr>`).join('')}
+            ${ADMIN_USERS.map(u=>`<tr><td>${u.name}</td><td>${u.role}</td><td><span class="status-pill ${u.status==='Actif'?'ok':'blocked'}">${u.status}</span></td><td>${u.joined}</td><td>${u.role!=='Admin'?`<button class="icon-btn danger" onclick="adminDeleteUser('${u.id}','${u.name.replace(/'/g,"\\'")}')"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>`:''}</td></tr>`).join('')}
           </tbody>
         </table></div>
       ` : ''}
@@ -3524,7 +3525,7 @@ function renderPayoutTabHTML(role){
   const info = (CURRENT_PROFILE && CURRENT_PROFILE.payout_info) || {};
   return `
   <h2 style="font-size:20px;margin-bottom:6px;">Recevoir mes paiements</h2>
-  <p class="small-muted" style="margin-bottom:20px;">💰 Les paiements sont versés une fois par mois, entre le <b>25 et le 5</b> du mois suivant.</p>
+  <p class="small-muted" style="margin-bottom:20px;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M9.5 15c.5 1 1.5 1.5 2.7 1.5 1.6 0 2.8-.9 2.8-2.1 0-1.4-1.2-1.9-2.9-2.3-1.7-.4-2.9-.9-2.9-2.3 0-1.2 1.2-2.1 2.8-2.1 1.2 0 2.2.5 2.7 1.5"/><path d="M12 6.5v11"/></svg> Les paiements sont versés une fois par mois, entre le <b>25 et le 5</b> du mois suivant.</p>
   <div style="max-width:480px;">
     <div class="field"><label>Méthode de réception</label><select id="${prefix}PayoutMethod">
       <option value="moncash" ${info.method==='moncash'?'selected':''}>MonCash</option>
@@ -3621,7 +3622,7 @@ function renderAdminCourseBuilder(){
   return `
   <div style="border:1.5px solid var(--gold);border-radius:14px;padding:20px;margin-bottom:26px;">
     <div class="steps" style="justify-content:flex-start;margin-bottom:24px;">
-      <div class="step-dot ${state.courseBuilderStep===1?'active':(state.courseBuilderStep>1?'done':'')}">${state.courseBuilderStep>1?'✓':1}</div>
+      <div class="step-dot ${state.courseBuilderStep===1?'active':(state.courseBuilderStep>1?'done':'')}">${state.courseBuilderStep>1?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg>':1}</div>
       <div class="step-line"></div>
       <div class="step-dot ${state.courseBuilderStep===2?'active':''}">2</div>
       <span class="small-muted" style="margin-left:14px;">${state.courseBuilderStep===1?"Étape 1 — Informations générales":"Étape 2 — Modules, théorie, vidéo et quiz"}</span>
@@ -3653,8 +3654,8 @@ function renderAdminCourseBuilder(){
       ${state.builderModules.length===0?`<p class="small-muted" style="margin-bottom:16px;">Aucun module pour l'instant. Ajoutez votre premier module ci-dessous.</p>`:''}
       ${state.builderModules.map((m,idx)=>`
         <div class="builder-module-card">
-          <div><b style="font-size:13.5px;">Module ${idx+1} — ${m.title}</b><div class="small-muted">${m.theory?'📖 Texte ✓':'📖 Sans texte'} · ${m.videoUrl?'🎬 Vidéo ✓':'🎬 Sans vidéo'} · ❓ ${m.quiz.length} question(s)</div></div>
-          <button class="icon-btn danger" onclick="removeBuilderModule(${idx})">🗑</button>
+          <div><b style="font-size:13.5px;">Module ${idx+1} — ${m.title}</b><div class="small-muted">${m.theory?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg> Texte <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 4C9 2 5 2 3 3v15c2-1 6-1 9 1 3-2 7-2 9-1V3c-2-1-6-1-9 1"/><path d="M12 4v16"/></svg> Sans texte'} · ${m.videoUrl?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8.5 16 12l6 3.5v-7Z"/></svg> Vidéo <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M22 8.5 16 12l6 3.5v-7Z"/></svg> Sans vidéo'} · <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7"/><path d="M12 17h.01"/></svg> ${m.quiz.length} question(s)</div></div>
+          <button class="icon-btn danger" onclick="removeBuilderModule(${idx})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>
         </div>`).join('')}
 
       ${!state.showModuleEditor ? `
@@ -3676,7 +3677,7 @@ function renderAdminCourseBuilder(){
               <input type="radio" name="qz_${qi}_correct" value="${oi}" ${q.correct===oi?'checked':''}>
               <input type="text" id="qz_${qi}_opt${oi}" value="${(q.options&&q.options[oi])||''}" placeholder="Option ${String.fromCharCode(65+oi)}">
             </div>`).join('')}
-            <button class="icon-btn danger" onclick="removeQuizQuestion(${qi})">🗑 Retirer cette question</button>
+            <button class="icon-btn danger" onclick="removeQuizQuestion(${qi})"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg> Retirer cette question</button>
           </div>`).join('')}
         </div>
         <button class="btn btn-outline btn-sm" onclick="addQuizQuestion()">+ Ajouter une question</button>
@@ -3974,7 +3975,7 @@ function renderProductDetail(){
         <div style="margin-top:24px;">
           <h4 style="color:#fff;font-size:15px;margin-bottom:10px;">Ce que vous obtenez</h4>
           <div class="step-list">
-            ${p.benefits.map(b=>`<div class="step-item"><div class="num" style="background:rgba(255,255,255,.15);color:#fff;">✓</div><div><p style="color:rgba(255,255,255,.85);margin:0;">${b}</p></div></div>`).join('')}
+            ${p.benefits.map(b=>`<div class="step-item"><div class="num" style="background:rgba(255,255,255,.15);color:#fff;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M20 6 9 17l-5-5"/></svg></div><div><p style="color:rgba(255,255,255,.85);margin:0;">${b}</p></div></div>`).join('')}
           </div>
         </div>` : ''}
       </div>
@@ -3983,7 +3984,7 @@ function renderProductDetail(){
         <div style="font-size:26px;font-weight:800;font-family:'Sora',sans-serif;color:var(--navy-dark);margin-bottom:4px;">${fmtHTG(p.price)}</div>
         <p class="small-muted" style="margin:0 0 16px;">Paiement unique · Accès immédiat au téléchargement</p>
         <button class="btn btn-primary btn-block" onclick="go('product-checkout',{productId:'${p.id}'})">${p.free?'Obtenir gratuitement':'Acheter maintenant'}</button>
-        <p class="small-muted" style="text-align:center;margin-top:10px;">🔒 Paiement sécurisé · Livraison instantanée</p>
+        <p class="small-muted" style="text-align:center;margin-top:10px;"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Paiement sécurisé · Livraison instantanée</p>
       </div>
     </div>
   </section>
@@ -3994,7 +3995,7 @@ function renderProductDetail(){
     <div class="module">
       <div class="module-head" onclick="state.openModule = state.openModule==='faq'+${idx}?null:'faq'+${idx};renderApp();">
         <div class="module-head-left"><h4 style="margin:0;">${f.q}</h4></div>
-        <span>${state.openModule==='faq'+idx?'▲':'▼'}</span>
+        <span>${state.openModule==='faq'+idx?'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M18 15 12 9l-6 6"/></svg>':'<svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M6 9l6 6 6-6"/></svg>'}</span>
       </div>
       <div class="module-body ${state.openModule==='faq'+idx?'open':''}" style="padding:16px 20px;"><p class="small-muted" style="margin:0;">${f.a}</p></div>
     </div>`).join('')}
@@ -4014,17 +4015,17 @@ function renderProductCheckout(){
         ${!p.free ? `
         <h3 style="font-size:16px;margin-bottom:10px;">Choisissez une devise</h3>
         <div class="pay-method" style="margin-bottom:6px;">
-          <button class="${currency==='htg'?'active':''}" onclick="state.payCurrency='htg';state.payMethod='moncash';renderApp();">🇭🇹 Payer en Gourdes (HTG)</button>
-          <button class="${currency==='usd'?'active':''}" onclick="state.payCurrency='usd';state.payMethod='card';renderApp();">💵 Payer en Dollars (USD)</button>
+          <button class="${currency==='htg'?'active':''}" onclick="state.payCurrency='htg';state.payMethod='moncash';renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="4" width="20" height="7" fill="#00209F"/><rect x="2" y="11" width="20" height="7" fill="#D21034"/></svg> Payer en Gourdes (HTG)</button>
+          <button class="${currency==='usd'?'active':''}" onclick="state.payCurrency='usd';state.payMethod='card';renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><path d="M9.5 15c.5 1 1.5 1.5 2.7 1.5 1.6 0 2.8-.9 2.8-2.1 0-1.4-1.2-1.9-2.9-2.3-1.7-.4-2.9-.9-2.9-2.3 0-1.2 1.2-2.1 2.8-2.1 1.2 0 2.2.5 2.7 1.5"/><path d="M12 6.5v11"/></svg> Payer en Dollars (USD)</button>
         </div>
         <h3 style="font-size:16px;">Mode de paiement</h3>
         <div class="pay-method">
           ${currency==='htg' ? `
-            <button class="${state.payMethod==='moncash'?'active':''}" onclick="state.payMethod='moncash';renderApp();">📱 MonCash</button>
-            <button class="${state.payMethod==='natcash'?'active':''}" onclick="state.payMethod='natcash';renderApp();">📱 NatCash</button>
+            <button class="${state.payMethod==='moncash'?'active':''}" onclick="state.payMethod='moncash';renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 4h4l1.5 5-2.5 1.5a12 12 0 0 0 6 6l1.5-2.5 5 1.5v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg> MonCash</button>
+            <button class="${state.payMethod==='natcash'?'active':''}" onclick="state.payMethod='natcash';renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M5 4h4l1.5 5-2.5 1.5a12 12 0 0 0 6 6l1.5-2.5 5 1.5v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg> NatCash</button>
           ` : `
-            <button class="${state.payMethod==='card'?'active':''}" onclick="state.payMethod='card';renderApp();">💳 Carte bancaire</button>
-            <button class="${state.payMethod==='paypal'?'active':''}" onclick="state.payMethod='paypal';renderApp();">🅿️ PayPal</button>
+            <button class="${state.payMethod==='card'?'active':''}" onclick="state.payMethod='card';renderApp();"><svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg> Carte bancaire</button>
+            <button class="${state.payMethod==='paypal'?'active':''}" onclick="state.payMethod='paypal';renderApp();">🅿 PayPal</button>
           `}
         </div>` : ''}
         <div class="field"><label>Nom complet</label><input type="text" id="prodBuyerName" value="${state.loggedIn?state.currentUser.name:''}"></div>
