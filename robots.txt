@@ -1,4 +1,14 @@
 User-agent: *
 Allow: /
+Disallow: /tableau-de-bord.html
+Disallow: /espace-formateur.html
+Disallow: /admin.html
+Disallow: /apprendre.html
+Disallow: /paiement.html
+Disallow: /connexion
+Disallow: /inscription
+Disallow: /mot-de-passe-oublie
+Disallow: /reinitialiser-mot-de-passe
+Disallow: /verification
 
-Sitemap: https://jc-academy.vercel.app/sitemap.xml
+Sitemap: https://jcacademy.online/sitemap.xml

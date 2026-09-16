@@ -1,0 +1,31 @@
+# public/_redirects
+#
+# Format Netlify. Si tu utilises un autre hébergeur (Vercel, Nginx,
+# Apache...), le PRINCIPE reste le même mais la syntaxe change — demande-
+# moi et je te donne l'équivalent exact pour ton hébergeur.
+#
+# IMPORTANT : les vrais fichiers statiques (cours.html, produits.html,
+# paiement.html, etc.) sont toujours servis en priorité automatiquement.
+# Les règles ci-dessous ne s'appliquent qu'aux adresses qui n'ont PAS de
+# fichier correspondant.
+
+# Page dédiée à CHAQUE cours (ex: /cours/introduction-au-marketing),
+# générée à la volée par l'Edge Function "course-page" — pas de fichier
+# fixe nécessaire, donc pas besoin de rebuild quand un formateur ajoute
+# un cours.
+/cours/:slug      https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/course-page/:slug      200
+
+# Idem pour chaque produit numérique.
+/produits/:slug   https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/product-page/:slug     200
+
+# Sitemap généré dynamiquement (§23) — mêmes raisons que ci-dessus : pas
+# de fichier fixe possible pour du contenu ajouté en continu.
+/sitemap.xml      https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/sitemap                200
+
+# Toutes les autres routes "virtuelles" gérées par le SPA (accueil,
+# /articles, /actualites, /formateurs, /connexion, /inscription, etc.)
+# doivent être servies par index.html, qui contient le routeur JS
+# (assets/js/app/router.js). Cette règle doit rester EN DERNIER : les
+# règles plus spécifiques au-dessus et les vrais fichiers sont toujours
+# essayés avant.
+/*                /index.html                                                          200

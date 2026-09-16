@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!--
+    Page de LISTE des produits uniquement. Le détail de chaque produit a
+    sa propre vraie page à /produits/<slug>, générée par l'Edge Function
+    "product-page" (voir supabase/functions/product-page/ et
+    public/_redirects).
+  -->
+  <title>Nos produits numériques — JC Academy</title>
+  <meta name="description" content="Découvrez tous les produits numériques JC Academy." />
+  <link rel="canonical" href="https://jcacademy.online/produits.html" />
+  <meta property="og:title" content="Nos produits numériques — JC Academy" />
+  <meta property="og:description" content="Découvrez tous les produits numériques JC Academy." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="navbar-root"></div>
+
+  <main id="page-root">
+    <p>Chargement des produits…</p>
+  </main>
+
+  <div id="footer-root"></div>
+
+  <script type="module">
+    import { renderNavbar } from "/navbar.js";
+    import { renderFooter } from "/footer.js";
+    renderNavbar();
+    renderFooter();
+  </script>
+  <script type="module" src="/produits.js"></script>
+</body>
+</html>

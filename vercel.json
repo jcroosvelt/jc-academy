@@ -1,6 +1,8 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    { "source": "/cours/:slug", "destination": "https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/course-page/:slug" },
+    { "source": "/produits/:slug", "destination": "https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/product-page/:slug" },
+    { "source": "/sitemap.xml", "destination": "https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/sitemap" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
