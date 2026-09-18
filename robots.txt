@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard-admin.html
+Disallow: /dashboard-formateur.html
+Disallow: /dashboard-etudiant.html
+Disallow: /checkout.html
+Disallow: /auth-callback.html
+
+Sitemap: https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/sitemap
