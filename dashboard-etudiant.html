@@ -39,9 +39,10 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-wrap:break-word;
   word-break:break-word;
-  max-width:100vw;
+  overflow-x:hidden;
+  position:relative;
 }
-html{max-width:100%;overflow-x:hidden;}
+html{overflow-x:hidden;}
 h1,h2,h3,h4,.display{
   font-family:'Sora',sans-serif;
   font-weight:700;
@@ -1006,7 +1007,7 @@ function selectLesson(lessonId){
   if (!textRead){
     html += `<button class="btn btn-primary" id="markReadBtn">J'ai terminé la lecture</button>`;
   } else if (lesson.video_url && !videoDone){
-    html += `<video controls src="${lesson.video_url}"></video><button class="btn btn-primary" id="markVideoBtn">Vidéo terminée</button>`;
+    html += `<div id="videoPlayerWrap"><p class="small-muted">Chargement de la vidéo...</p></div><button class="btn btn-primary" id="markVideoBtn">Vidéo terminée</button>`;
   } else {
     html += `<p style="color:var(--success);font-weight:700;">Leçon terminée ✓</p>`;
     const nextLesson = findNextLesson(loc);
@@ -1029,6 +1030,29 @@ function selectLesson(lessonId){
     const next = findNextLesson(loc);
     if (next) selectLesson(next.id);
   });
+
+  if (textRead && lesson.video_url && !videoDone){
+    loadVideoPlayer(lessonId, lesson.video_url);
+  }
+}
+
+async function loadVideoPlayer(lessonId, videoId){
+  const wrap = document.getElementById('videoPlayerWrap');
+  if (!wrap) return;
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch('https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/bunny-get-playback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+    body: JSON.stringify({ lessonId })
+  });
+  const data = await res.json();
+  if (!res.ok || !data.embedUrl){
+    wrap.innerHTML = '<p style="color:#C0392B;">Impossible de charger la vidéo pour le moment.</p>';
+    return;
+  }
+  wrap.innerHTML = `<div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000;">
+    <iframe src="${data.embedUrl}" loading="lazy" style="border:0;position:absolute;top:0;left:0;width:100%;height:100%;" allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
+  </div>`;
 }
 
 function findNextLesson(loc){

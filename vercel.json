@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/c/:slug", "destination": "https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/share?type=course&slug=:slug" },
+    { "source": "/p/:slug", "destination": "https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/share?type=product&slug=:slug" },
+    { "source": "/a/:slug", "destination": "https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/share?type=article&slug=:slug" },
+    { "source": "/n/:slug", "destination": "https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/share?type=actualite&slug=:slug" }
+  ]
+}

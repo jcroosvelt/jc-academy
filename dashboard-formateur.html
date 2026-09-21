@@ -39,9 +39,10 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-wrap:break-word;
   word-break:break-word;
-  max-width:100vw;
+  overflow-x:hidden;
+  position:relative;
 }
-html{max-width:100%;overflow-x:hidden;}
+html{overflow-x:hidden;}
 h1,h2,h3,h4,.display{
   font-family:'Sora',sans-serif;
   font-weight:700;
@@ -856,6 +857,7 @@ footer a:hover{color:var(--gold);}
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import * as tus from 'https://cdn.jsdelivr.net/npm/tus-js-client@4/+esm';
 const supabase = createClient(
   'https://tzgwhhxxozujxnjjpucg.supabase.co',
   'sb_publishable_V8gqxhUp1sNsLP0eT7oGsg_gKfkam_E'
@@ -1166,6 +1168,10 @@ async function loadLessons(moduleId, box){
         <div class="upload-box" id="videoBox-${moduleId}">Cliquez pour choisir une vidéo</div>
         <input type="file" accept="video/*" class="file-input-hidden" id="videoInput-${moduleId}">
         <p class="small-muted" id="videoName-${moduleId}"></p>
+        <div id="videoProgress-${moduleId}" class="hidden" style="margin-top:8px;">
+          <div style="background:var(--surface);border-radius:8px;height:8px;overflow:hidden;"><div id="videoProgressBar-${moduleId}" style="background:var(--gold);height:100%;width:0%;"></div></div>
+          <p class="small-muted" id="videoProgressLabel-${moduleId}">0%</p>
+        </div>
       </div>
       <button class="btn btn-outline btn-sm" data-action="add-lesson" data-id="${moduleId}">+ Ajouter la leçon</button>
     </div>
@@ -1203,19 +1209,61 @@ async function loadLessons(moduleId, box){
     const contentText = document.getElementById(`newLessonContent-${moduleId}`).innerText.trim();
     if (!title || !contentText){ alert('Titre et texte théorique obligatoires.'); return; }
 
-    let videoUrl = null;
+    const addBtn = box.querySelector('[data-action="add-lesson"]');
+    let videoId = null;
+
     if (pendingVideo){
-      const path = `${currentUser.id}/${Date.now()}-${pendingVideo.name}`;
-      const { error: upErr } = await supabase.storage.from('lesson-videos').upload(path, pendingVideo);
-      if (upErr){ alert('Erreur upload vidéo : ' + upErr.message); return; }
-      const { data: pub } = supabase.storage.from('lesson-videos').getPublicUrl(path);
-      videoUrl = pub.publicUrl;
+      addBtn.disabled = true;
+      const progressWrap = document.getElementById(`videoProgress-${moduleId}`);
+      const progressBar = document.getElementById(`videoProgressBar-${moduleId}`);
+      const progressLabel = document.getElementById(`videoProgressLabel-${moduleId}`);
+      progressWrap.classList.remove('hidden');
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const initRes = await fetch('https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/bunny-init-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ title: pendingVideo.name })
+        });
+        const initData = await initRes.json();
+        if (!initRes.ok) throw new Error(initData.error || 'Erreur d\\'initialisation Bunny');
+
+        await new Promise((resolve, reject) => {
+          const upload = new tus.Upload(pendingVideo, {
+            endpoint: 'https://video.bunnycdn.com/tusupload',
+            retryDelays: [0, 3000, 5000, 10000],
+            headers: {
+              AuthorizationSignature: initData.signature,
+              AuthorizationExpire: initData.expirationTime,
+              VideoId: initData.videoId,
+              LibraryId: initData.libraryId,
+            },
+            metadata: { filetype: pendingVideo.type, title: pendingVideo.name },
+            onError: reject,
+            onProgress: (bytesUploaded, bytesTotal) => {
+              const pct = ((bytesUploaded / bytesTotal) * 100).toFixed(0);
+              progressBar.style.width = pct + '%';
+              progressLabel.textContent = pct + '%';
+            },
+            onSuccess: resolve,
+          });
+          upload.start();
+        });
+
+        videoId = initData.videoId;
+      } catch (e){
+        alert('Erreur upload vidéo : ' + (e?.message || e));
+        addBtn.disabled = false;
+        return;
+      }
     }
 
     const { count } = await supabase.from('lessons').select('id',{count:'exact',head:true}).eq('module_id', moduleId);
     const { error } = await supabase.from('lessons').insert({
-      module_id: moduleId, title, content, video_url: videoUrl, position: (count||0) + 1
+      module_id: moduleId, title, content, video_url: videoId, position: (count||0) + 1
     });
+    addBtn.disabled = false;
     if (error){ alert('Erreur : ' + error.message); return; }
     loadLessons(moduleId, box);
   });

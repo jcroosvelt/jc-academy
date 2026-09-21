@@ -47,9 +47,10 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-wrap:break-word;
   word-break:break-word;
-  max-width:100vw;
+  overflow-x:hidden;
+  position:relative;
 }
-html{max-width:100%;overflow-x:hidden;}
+html{overflow-x:hidden;}
 h1,h2,h3,h4,.display{
   font-family:'Sora',sans-serif;
   font-weight:700;
@@ -745,9 +746,22 @@ const wrap = document.getElementById('articleContent');
       <h1>${escapeHtml(data.title)}</h1>
       <div class="meta">${formatDate(data.created_at)}</div>
       <div class="body-text">${escapeHtml(data.body || data.excerpt || '')}</div>
-      <div style="margin-top:32px;"><a href="actualites.html" class="btn btn-outline">&#8592; Retour aux actualités</a></div>
+      <div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="actualites.html" class="btn btn-outline">&#8592; Retour aux actualités</a>
+        <button class="btn btn-primary" id="shareNewsBtn">Partager cette actualité</button>
+      </div>
     </div>
   `;
+
+  document.getElementById('shareNewsBtn').addEventListener('click', async () => {
+    const shareUrl = `${window.location.origin}/n/${slug}`;
+    if (navigator.share){
+      try { await navigator.share({ title: data.title, url: shareUrl }); } catch(_e){}
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Lien copié : ' + shareUrl);
+    }
+  });
 })();
 </script>
 

@@ -40,9 +40,10 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-wrap:break-word;
   word-break:break-word;
-  max-width:100vw;
+  overflow-x:hidden;
+  position:relative;
 }
-html{max-width:100%;overflow-x:hidden;}
+html{overflow-x:hidden;}
 h1,h2,h3,h4,.display{
   font-family:'Sora',sans-serif;
   font-weight:700;
@@ -564,6 +565,12 @@ footer a:hover{color:var(--gold);}
 .cert-icon{width:44px;height:44px;border-radius:10px;background:#FBEAD2;color:#B57200;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto;}
 .cert-icon.pending{background:#F1F1F4;color:#9AA0AE;}
 
+
+.pw-wrap{position:relative;}
+.pw-wrap input{width:100%;padding-right:42px;}
+.pw-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;padding:4px;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;}
+.pw-toggle:hover{color:var(--navy);}
+.pw-toggle svg{width:19px;height:19px;}
 </style>
 </head>
 <body>
@@ -632,14 +639,20 @@ footer a:hover{color:var(--gold);}
       </div>
       <div class="field">
         <label for="regPassword">Mot de passe</label>
-        <input type="password" id="regPassword" autocomplete="new-password" minlength="6" required>
+        <div class="pw-wrap"><input type="password" id="regPassword" autocomplete="new-password" minlength="6" required><button type="button" class="pw-toggle" data-target="regPassword" aria-label="Afficher le mot de passe" tabindex="-1">
+        <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="icon-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:none;"><path d="M17.9 17.9A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.3 20.3 0 0 1 5.06-6.06M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a20.36 20.36 0 0 1-3.29 4.36M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+      </button></div>
       </div>
       <div class="field">
         <label for="regPasswordConfirm">Confirmer le mot de passe</label>
-        <input type="password" id="regPasswordConfirm" autocomplete="new-password" minlength="6" required>
+        <div class="pw-wrap"><input type="password" id="regPasswordConfirm" autocomplete="new-password" minlength="6" required><button type="button" class="pw-toggle" data-target="regPasswordConfirm" aria-label="Afficher le mot de passe" tabindex="-1">
+        <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="icon-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:none;"><path d="M17.9 17.9A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.3 20.3 0 0 1 5.06-6.06M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a20.36 20.36 0 0 1-3.29 4.36M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+      </button></div>
       </div>
 
-      <div class="cf-turnstile" data-sitekey="0x4AAAAAAE6yRaiyGrQSxeNh" style="margin-bottom:14px;"></div>
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAAE6yRaiyGrQSxeNh" data-size="flexible" style="margin-bottom:14px;max-width:100%;overflow:hidden;"></div>
 
       <p id="regMsg" style="display:none;font-size:13.5px;margin:0 0 14px;"></p>
 
@@ -836,10 +849,9 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 
   if (data.session){
     showMsg('Compte créé, redirection...', false);
-    window.location.href = 'dashboard-etudiant.html';
+    window.location.href = 'completer-profil.html';
   } else {
-    showMsg('Compte créé ! Vérifiez votre boîte mail pour confirmer votre adresse avant de vous connecter.', false);
-    document.getElementById('registerForm').reset();
+    window.location.href = 'verifiez-votre-email.html?email=' + encodeURIComponent(email);
   }
 });
 
@@ -854,6 +866,16 @@ async function oauthSignIn(provider){
 }
 document.getElementById('googleAuthBtn').addEventListener('click', () => oauthSignIn('google'));
 document.getElementById('facebookAuthBtn').addEventListener('click', () => oauthSignIn('facebook'));
+
+document.querySelectorAll('.pw-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input = document.getElementById(btn.dataset.target);
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    btn.querySelector('.icon-eye').style.display = showing ? 'block' : 'none';
+    btn.querySelector('.icon-hide').style.display = showing ? 'none' : 'block';
+  });
+});
 </script>
 </body>
 </html>

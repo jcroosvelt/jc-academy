@@ -47,9 +47,10 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-wrap:break-word;
   word-break:break-word;
-  max-width:100vw;
+  overflow-x:hidden;
+  position:relative;
 }
-html{max-width:100%;overflow-x:hidden;}
+html{overflow-x:hidden;}
 h1,h2,h3,h4,.display{
   font-family:'Sora',sans-serif;
   font-weight:700;
@@ -640,6 +641,7 @@ footer a:hover{color:var(--gold);}
       <div id="dEnrollArea">
         <button class="btn btn-primary btn-block" id="dEnrollBtn">Chargement...</button>
       </div>
+      <button class="btn btn-outline btn-block" id="shareCourseBtn" style="margin-top:10px;">Partager ce cours</button>
       <ul class="sidebar-list">
         <li><span>Type de parcours</span><b id="dTrackText">—</b></li>
         <li><span>Modules</span><b id="dModuleCount">—</b></li>
@@ -788,6 +790,17 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get('slug');
+
+document.getElementById('shareCourseBtn').addEventListener('click', async () => {
+  const shareUrl = `${window.location.origin}/c/${slug}`;
+  const title = document.getElementById('dTitle').textContent;
+  if (navigator.share){
+    try { await navigator.share({ title, url: shareUrl }); } catch(_e){}
+  } else {
+    await navigator.clipboard.writeText(shareUrl);
+    alert('Lien copié : ' + shareUrl);
+  }
+});
 
 let currentSession = null;
 
