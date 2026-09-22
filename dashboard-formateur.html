@@ -918,7 +918,7 @@ async function uploadVideoToBunny(file, initData, onProgress){
   });
   if (!createRes.ok) throw new Error('Impossible de démarrer le transfert vers Bunny (étape 1).');
   const uploadUrl = createRes.headers.get('Location');
-  if (!uploadUrl) throw new Error('Bunny n\\'a pas renvoyé d\\'adresse de transfert.');
+  if (!uploadUrl) throw new Error('Bunny n\'a pas renvoyé d\'adresse de transfert.');
 
   await new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -1000,7 +1000,7 @@ async function loadCoursesList(){
   const { data, error } = await supabase.from('courses').select('*').eq('teacher_id', currentUser.id).order('created_at', { ascending: false });
 
   if (error){ wrap.innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(error.message)}</p>`; return; }
-  if (!data || data.length === 0){ wrap.innerHTML = '<p class="empty-state">Vous n\\'avez pas encore créé de cours.</p>'; return; }
+  if (!data || data.length === 0){ wrap.innerHTML = '<p class="empty-state">Vous n\'avez pas encore créé de cours.</p>'; return; }
 
   const statusLabel = { brouillon:'Brouillon', en_attente:'En attente de validation', publie:'Publié', rejete:'Rejeté' };
   const statusClass = { brouillon:'pending', en_attente:'pending', publie:'ok', rejete:'blocked' };
@@ -1133,7 +1133,7 @@ async function loadModules(courseId){
   const wrap = document.getElementById('modulesList');
   const { data, error } = await supabase.from('course_modules').select('*').eq('course_id', courseId).order('position', { ascending: true });
   if (error){ wrap.innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(error.message)}</p>`; return; }
-  if (!data || data.length === 0){ wrap.innerHTML = '<p class="small-muted">Aucun module pour l\\'instant.</p>'; return; }
+  if (!data || data.length === 0){ wrap.innerHTML = '<p class="small-muted">Aucun module pour l\'instant.</p>'; return; }
 
   wrap.innerHTML = data.map((m,i) => `
     <div class="builder-module-card" style="flex-direction:column;align-items:stretch;">
@@ -1269,7 +1269,7 @@ async function loadLessons(moduleId, box){
           body: JSON.stringify({ title: pendingVideo.name })
         });
         const initData = await initRes.json();
-        if (!initRes.ok) throw new Error(initData.error || 'Erreur d\\'initialisation Bunny');
+        if (!initRes.ok) throw new Error(initData.error || 'Erreur d\'initialisation Bunny');
 
         await uploadVideoToBunny(pendingVideo, initData, (pct) => {
           progressBar.style.width = pct + '%';

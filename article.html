@@ -730,7 +730,7 @@ const wrap = document.getElementById('articleContent');
 (async () => {
   if (!slug){ wrap.innerHTML = '<p>Article introuvable.</p>'; return; }
   const { data, error } = await supabase.from('site_content').select('*').eq('slug', slug).eq('type', 'article').eq('published', true).single();
-  if (error || !data){ wrap.innerHTML = '<p>Cet article est introuvable ou n\\'est plus disponible.</p><a href="blog.html" class="btn btn-outline">Retour au blog</a>'; return; }
+  if (error || !data){ wrap.innerHTML = '<p>Cet article est introuvable ou n\'est plus disponible.</p><a href="blog.html" class="btn btn-outline">Retour au blog</a>'; return; }
 
   document.title = data.title + ' — JC Academy';
   const metaDesc = document.querySelector('meta[name="description"]') || (() => { const m = document.createElement('meta'); m.name='description'; document.head.appendChild(m); return m; })();

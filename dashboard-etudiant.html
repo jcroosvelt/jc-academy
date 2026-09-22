@@ -822,7 +822,7 @@ async function loadMyCourses(){
     .order('created_at', { ascending: false });
 
   if (error){ wrap.innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(error.message)}</p>`; return; }
-  if (!data || data.length === 0){ wrap.innerHTML = '<p class="empty-state">Vous n\\'êtes inscrit à aucun cours pour le moment. <a href="courses.html">Découvrir les cours</a></p>'; return; }
+  if (!data || data.length === 0){ wrap.innerHTML = '<p class="empty-state">Vous n\'êtes inscrit à aucun cours pour le moment. <a href="courses.html">Découvrir les cours</a></p>'; return; }
 
   wrap.innerHTML = data.map(e => `
     <div class="course-row">
