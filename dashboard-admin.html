@@ -87,15 +87,15 @@ img{max-width:100%;display:block;}
 .brand img{height:40px;width:auto;}
 .brand-name{font-family:'Sora',sans-serif;font-weight:800;font-size:19px;color:var(--navy-dark);}
 .brand-name span{color:var(--gold);}
-.nav-links{display:flex;align-items:center;gap:28px;}
-.nav-links a{font-size:14.5px;font-weight:600;color:var(--text-muted);transition:color .15s;}
+.nav-links{display:flex;align-items:center;gap:22px;}
+.nav-links a{font-size:14.5px;font-weight:600;color:var(--text-muted);transition:color .15s;white-space:nowrap;}
 .nav-links a:hover, .nav-links a.active{color:var(--navy);}
 .mobile-auth-row{display:none;}
 .nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .nav-burger{display:none;background:none;border:none;font-size:24px;color:var(--navy);flex-shrink:0;}
-.brand{min-width:0;}
-.brand-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-@media (max-width:900px){
+.brand{flex-shrink:0;}
+.brand-name{white-space:nowrap;}
+@media (max-width:1180px){
   .nav-links{position:fixed;top:65px;left:0;right:0;background:#fff;flex-direction:column;padding:20px 24px;border-bottom:1px solid var(--border);display:none;gap:16px;align-items:flex-start;max-height:calc(100vh - 65px);overflow-y:auto;z-index:99;}
   .nav-links.open{display:flex;}
   .mobile-auth-row{display:flex;}
@@ -104,7 +104,7 @@ img{max-width:100%;display:block;}
   .nav-actions{gap:8px;}
 }
 @media (max-width:400px){
-  .brand-name{font-size:15px;max-width:110px;}
+  .brand-name{font-size:15px;}
 }
 .notif-bell-wrap{position:relative;}
 .notif-bell{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;position:relative;flex-shrink:0;}
@@ -726,6 +726,7 @@ select.role-select{padding:7px 10px;border-radius:8px;border:1.5px solid var(--b
             </div>
           </div>
           <div class="form-group"><label>Titre</label><input type="text" id="cTitle"></div>
+          <div class="form-group"><label>Auteur</label><input type="text" id="cAuthor" placeholder="Ex : JC Roosvelt"></div>
           <div class="form-group"><label>Extrait (résumé affiché sur les cartes)</label><textarea id="cExcerpt" style="min-height:70px;"></textarea></div>
           <div class="form-group"><label>Contenu complet</label><textarea id="cBody" style="min-height:180px;"></textarea></div>
           <div class="form-group">
@@ -878,6 +879,9 @@ async function updateNavForSession(session){
   const { data: { session } } = await supabase.auth.getSession();
   await updateNavForSession(session);
 })();
+/* Se met a jour automatiquement si la connexion change dans un AUTRE onglet
+   (meme site ouvert sur deux comptes differents, par exemple) */
+supabase.auth.onAuthStateChange((_event, session) => { updateNavForSession(session); });
 
 /* ---- Menu mobile ---- */
 const burger = document.getElementById('navBurger');
@@ -1218,6 +1222,7 @@ function openContentEditor(item){
   document.getElementById('contentEditorTitle').textContent = item ? 'Modifier le contenu' : 'Nouveau contenu';
   document.querySelector(`input[name="cType"][value="${item?.type || 'article'}"]`).checked = true;
   document.getElementById('cTitle').value = item?.title || '';
+  document.getElementById('cAuthor').value = item?.author_name || '';
   document.getElementById('cExcerpt').value = item?.excerpt || '';
   document.getElementById('cBody').value = item?.body || '';
   document.getElementById('cCoverPreview').classList.toggle('show', !!item?.cover_url);
@@ -1238,6 +1243,7 @@ async function saveContent(publish){
   const payload = {
     type: document.querySelector('input[name="cType"]:checked').value,
     title,
+    author_name: document.getElementById('cAuthor').value.trim(),
     excerpt: document.getElementById('cExcerpt').value.trim(),
     body: document.getElementById('cBody').value.trim(),
     published: publish,
@@ -1276,7 +1282,7 @@ async function loadContentList(){
     <div class="content-row">
       <div>
         <h4>${escapeHtml(item.title)}</h4>
-        <div class="meta">${item.type === 'actualite' ? 'Actualité' : 'Article'} · ${formatDate(item.created_at)} · <span class="status-pill ${item.published ? 'ok' : 'pending'}">${item.published ? 'Publié' : 'Brouillon'}</span></div>
+        <div class="meta">${item.type === 'actualite' ? 'Actualité' : 'Article'}${item.author_name ? ' · Par ' + escapeHtml(item.author_name) : ''} · ${formatDate(item.created_at)} · <span class="status-pill ${item.published ? 'ok' : 'pending'}">${item.published ? 'Publié' : 'Brouillon'}</span></div>
       </div>
       <div class="review-actions">
         <button class="btn-mini" data-action="edit-content" data-id="${item.id}">Modifier</button>

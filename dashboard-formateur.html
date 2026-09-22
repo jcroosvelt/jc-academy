@@ -87,15 +87,15 @@ img{max-width:100%;display:block;}
 .brand img{height:40px;width:auto;}
 .brand-name{font-family:'Sora',sans-serif;font-weight:800;font-size:19px;color:var(--navy-dark);}
 .brand-name span{color:var(--gold);}
-.nav-links{display:flex;align-items:center;gap:28px;}
-.nav-links a{font-size:14.5px;font-weight:600;color:var(--text-muted);transition:color .15s;}
+.nav-links{display:flex;align-items:center;gap:22px;}
+.nav-links a{font-size:14.5px;font-weight:600;color:var(--text-muted);transition:color .15s;white-space:nowrap;}
 .nav-links a:hover, .nav-links a.active{color:var(--navy);}
 .mobile-auth-row{display:none;}
 .nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .nav-burger{display:none;background:none;border:none;font-size:24px;color:var(--navy);flex-shrink:0;}
-.brand{min-width:0;}
-.brand-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-@media (max-width:900px){
+.brand{flex-shrink:0;}
+.brand-name{white-space:nowrap;}
+@media (max-width:1180px){
   .nav-links{position:fixed;top:65px;left:0;right:0;background:#fff;flex-direction:column;padding:20px 24px;border-bottom:1px solid var(--border);display:none;gap:16px;align-items:flex-start;max-height:calc(100vh - 65px);overflow-y:auto;z-index:99;}
   .nav-links.open{display:flex;}
   .mobile-auth-row{display:flex;}
@@ -104,7 +104,7 @@ img{max-width:100%;display:block;}
   .nav-actions{gap:8px;}
 }
 @media (max-width:400px){
-  .brand-name{font-size:15px;max-width:110px;}
+  .brand-name{font-size:15px;}
 }
 .notif-bell-wrap{position:relative;}
 .notif-bell{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;position:relative;flex-shrink:0;}
@@ -857,7 +857,6 @@ footer a:hover{color:var(--gold);}
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import * as tus from 'https://cdn.jsdelivr.net/npm/tus-js-client@4/+esm';
 const supabase = createClient(
   'https://tzgwhhxxozujxnjjpucg.supabase.co',
   'sb_publishable_V8gqxhUp1sNsLP0eT7oGsg_gKfkam_E'
@@ -885,6 +884,9 @@ async function updateNavForSession(session){
   const { data: { session } } = await supabase.auth.getSession();
   await updateNavForSession(session);
 })();
+/* Se met a jour automatiquement si la connexion change dans un AUTRE onglet
+   (meme site ouvert sur deux comptes differents, par exemple) */
+supabase.auth.onAuthStateChange((_event, session) => { updateNavForSession(session); });
 
 /* ---- Menu mobile ---- */
 const burger = document.getElementById('navBurger');
@@ -893,6 +895,46 @@ burger.addEventListener('click', () => navLinks.classList.toggle('open'));
 
 
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+
+/* ---- Televersement direct vers Bunny Stream, protocole TUS ecrit a la main
+   (aucune bibliotheque externe : plus fiable qu'un import qui peut casser
+   toute la page s'il echoue) ---- */
+function tusMetadata(fields){
+  return Object.entries(fields).map(([k, v]) => `${k} ${btoa(unescape(encodeURIComponent(v)))}`).join(',');
+}
+
+async function uploadVideoToBunny(file, initData, onProgress){
+  const createRes = await fetch('https://video.bunnycdn.com/tusupload', {
+    method: 'POST',
+    headers: {
+      'Tus-Resumable': '1.0.0',
+      'Upload-Length': String(file.size),
+      'Upload-Metadata': tusMetadata({ filetype: file.type || 'video/mp4', title: file.name }),
+      'AuthorizationSignature': initData.signature,
+      'AuthorizationExpire': String(initData.expirationTime),
+      'VideoId': initData.videoId,
+      'LibraryId': String(initData.libraryId),
+    },
+  });
+  if (!createRes.ok) throw new Error('Impossible de démarrer le transfert vers Bunny (étape 1).');
+  const uploadUrl = createRes.headers.get('Location');
+  if (!uploadUrl) throw new Error('Bunny n\\'a pas renvoyé d\\'adresse de transfert.');
+
+  await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PATCH', uploadUrl, true);
+    xhr.setRequestHeader('Tus-Resumable', '1.0.0');
+    xhr.setRequestHeader('Upload-Offset', '0');
+    xhr.setRequestHeader('Content-Type', 'application/offset+octet-stream');
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) onProgress(((e.loaded / e.total) * 100).toFixed(0));
+    };
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve() : reject(new Error('Échec du transfert vers Bunny (étape 2, code ' + xhr.status + ').'));
+    xhr.onerror = () => reject(new Error('Erreur réseau pendant le transfert vers Bunny.'));
+    xhr.send(file);
+  });
+}
+
 function formatDate(iso){ return new Date(iso).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}); }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function slugify(s){ return (s||'').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
@@ -1229,26 +1271,9 @@ async function loadLessons(moduleId, box){
         const initData = await initRes.json();
         if (!initRes.ok) throw new Error(initData.error || 'Erreur d\\'initialisation Bunny');
 
-        await new Promise((resolve, reject) => {
-          const upload = new tus.Upload(pendingVideo, {
-            endpoint: 'https://video.bunnycdn.com/tusupload',
-            retryDelays: [0, 3000, 5000, 10000],
-            headers: {
-              AuthorizationSignature: initData.signature,
-              AuthorizationExpire: initData.expirationTime,
-              VideoId: initData.videoId,
-              LibraryId: initData.libraryId,
-            },
-            metadata: { filetype: pendingVideo.type, title: pendingVideo.name },
-            onError: reject,
-            onProgress: (bytesUploaded, bytesTotal) => {
-              const pct = ((bytesUploaded / bytesTotal) * 100).toFixed(0);
-              progressBar.style.width = pct + '%';
-              progressLabel.textContent = pct + '%';
-            },
-            onSuccess: resolve,
-          });
-          upload.start();
+        await uploadVideoToBunny(pendingVideo, initData, (pct) => {
+          progressBar.style.width = pct + '%';
+          progressLabel.textContent = pct + '%';
         });
 
         videoId = initData.videoId;
