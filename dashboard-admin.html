@@ -656,6 +656,7 @@ select.role-select{padding:7px 10px;border-radius:8px;border:1.5px solid var(--b
         <a href="#" data-tab="content">Blog & Actualités</a>
         <a href="#" data-tab="gallery">Galerie</a>
         <a href="#" data-tab="settings">Paramètres du site</a>
+        <a href="#" data-tab="pages">Contenu des pages</a>
         <a href="mon-profil.html">Mon profil</a>
         <a href="#" class="logout" id="logoutLink">Déconnexion</a>
       </nav>
@@ -784,6 +785,20 @@ select.role-select{padding:7px 10px;border-radius:8px;border:1.5px solid var(--b
         </div>
         <p id="settingsMsg" style="display:none;font-size:13.5px;"></p>
         <button class="btn btn-primary" id="saveSettingsBtn">Enregistrer les paramètres</button>
+      </section>
+
+      <section id="tab-pages" class="tab-panel hidden">
+        <h3>Contenu des pages</h3>
+        <p class="small-muted" style="margin-top:-8px;margin-bottom:20px;">Modifiez les titres et textes affichés sur les pages du site. Les libellés de boutons liés au fonctionnement du site (connexion, achat...) ne sont pas modifiables ici pour éviter de casser une fonctionnalité.</p>
+        <div class="editor-card">
+          <div class="form-group">
+            <label>Page à modifier</label>
+            <select id="pageSelector"></select>
+          </div>
+          <div id="pageFieldsContainer"></div>
+          <p id="pageContentMsg" style="display:none;font-size:13.5px;"></p>
+          <button class="btn btn-primary" id="savePageContentBtn">Enregistrer cette page</button>
+        </div>
       </section>
     </main>
   </div>
@@ -938,7 +953,7 @@ document.querySelectorAll('.dash-nav a[data-tab]').forEach(link => {
       loaded[tab] = true;
       ({courses: loadCourses, teachers: loadTeachers, certificates: loadCertificates,
         users: loadUsers, products: loadProducts, messages: loadMessages,
-        content: loadContentList, gallery: loadGallery, settings: loadSettings})[tab]?.();
+        content: loadContentList, gallery: loadGallery, settings: loadSettings, pages: loadPageEditor})[tab]?.();
     }
   });
 });
@@ -1413,6 +1428,99 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
   msgEl.style.display = 'block';
   if (error){ msgEl.textContent = 'Erreur : ' + error.message; msgEl.style.color = '#C0392B'; }
   else { msgEl.textContent = 'Paramètres enregistrés !'; msgEl.style.color = '#1D9A6C'; }
+});
+
+/* ---- Contenu editable des pages statiques ---- */
+const PAGE_SCHEMA = {
+  'index': { label: 'Accueil', fields: [
+    { key: 'programmes_titre', label: 'Titre section "Nos programmes"', type: 'text' },
+    { key: 'formateurs_titre', label: 'Titre section "Nos formateurs"', type: 'text' },
+    { key: 'actualites_titre', label: 'Titre section "Actualités"', type: 'text' },
+    { key: 'galerie_titre', label: 'Titre section "Galerie"', type: 'text' },
+    { key: 'blog_titre', label: 'Titre section "Blog"', type: 'text' },
+    { key: 'blog_sous_titre', label: 'Sous-titre "Blog"', type: 'text' },
+    { key: 'produits_titre', label: 'Titre section "Produits numériques"', type: 'text' },
+    { key: 'cta_titre', label: 'Titre de la bannière finale', type: 'text' },
+    { key: 'cta_texte', label: 'Texte de la bannière finale', type: 'textarea' },
+  ]},
+  'a-propos': { label: 'À propos / Notre mission', fields: [
+    { key: 'hero_titre', label: 'Titre de la page', type: 'text' },
+    { key: 'hero_sous_titre', label: 'Sous-titre de la page', type: 'text' },
+    { key: 'mission_titre', label: 'Titre de la section mission', type: 'text' },
+    { key: 'mission_texte', label: 'Texte de la mission', type: 'textarea' },
+  ]},
+  'devenir-formateur': { label: 'Devenir formateur (haut de page)', fields: [
+    { key: 'hero_titre', label: 'Titre', type: 'text' },
+    { key: 'hero_sous_titre', label: 'Sous-titre', type: 'text' },
+  ]},
+  'contact': { label: 'Contact (haut de page)', fields: [
+    { key: 'hero_titre', label: 'Titre', type: 'text' },
+    { key: 'hero_sous_titre', label: 'Sous-titre', type: 'text' },
+  ]},
+  'carrieres': { label: 'Carrières', fields: [
+    { key: 'hero_titre', label: 'Titre', type: 'text' },
+    { key: 'hero_sous_titre', label: 'Sous-titre', type: 'text' },
+    { key: 'corps', label: 'Texte de la page', type: 'textarea' },
+  ]},
+  'partenaires': { label: 'Partenaires', fields: [
+    { key: 'hero_titre', label: 'Titre', type: 'text' },
+    { key: 'hero_sous_titre', label: 'Sous-titre', type: 'text' },
+    { key: 'corps', label: 'Texte de la page', type: 'textarea' },
+  ]},
+  'certificats': { label: 'Certificats (haut de page)', fields: [
+    { key: 'hero_titre', label: 'Titre', type: 'text' },
+    { key: 'hero_sous_titre', label: 'Sous-titre', type: 'text' },
+  ]},
+  'centre-aide': { label: "Centre d'aide (haut de page)", fields: [
+    { key: 'hero_titre', label: 'Titre', type: 'text' },
+    { key: 'hero_sous_titre', label: 'Sous-titre', type: 'text' },
+  ]},
+};
+
+function loadPageEditor(){
+  const selector = document.getElementById('pageSelector');
+  if (!selector.dataset.filled){
+    selector.innerHTML = Object.entries(PAGE_SCHEMA).map(([key, def]) => `<option value="${key}">${escapeHtml(def.label)}</option>`).join('');
+    selector.dataset.filled = '1';
+    selector.addEventListener('change', () => renderPageFields(selector.value));
+  }
+  renderPageFields(selector.value);
+}
+
+async function renderPageFields(pageKey){
+  const container = document.getElementById('pageFieldsContainer');
+  const def = PAGE_SCHEMA[pageKey];
+  container.innerHTML = '<p class="small-muted">Chargement...</p>';
+
+  const { data } = await supabase.from('page_content').select('blocks').eq('page_key', pageKey).maybeSingle();
+  const blocks = data?.blocks || {};
+
+  container.innerHTML = def.fields.map(f => `
+    <div class="form-group">
+      <label>${escapeHtml(f.label)}</label>
+      ${f.type === 'textarea'
+        ? `<textarea data-field="${f.key}" style="min-height:90px;">${escapeHtml(blocks[f.key] || '')}</textarea>`
+        : `<input type="text" data-field="${f.key}" value="${escapeHtml(blocks[f.key] || '')}">`}
+    </div>
+  `).join('');
+}
+
+document.getElementById('savePageContentBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('savePageContentBtn');
+  const pageKey = document.getElementById('pageSelector').value;
+  const container = document.getElementById('pageFieldsContainer');
+
+  const blocks = {};
+  container.querySelectorAll('[data-field]').forEach(el => { blocks[el.dataset.field] = el.value.trim(); });
+
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+  const { error } = await supabase.from('page_content').upsert({ page_key: pageKey, blocks, updated_at: new Date().toISOString() }, { onConflict: 'page_key' });
+  btn.disabled = false; btn.textContent = 'Enregistrer cette page';
+
+  const msgEl = document.getElementById('pageContentMsg');
+  msgEl.style.display = 'block';
+  if (error){ msgEl.textContent = 'Erreur : ' + error.message; msgEl.style.color = '#C0392B'; }
+  else { msgEl.textContent = 'Page mise à jour !'; msgEl.style.color = '#1D9A6C'; }
 });
 </script>
 

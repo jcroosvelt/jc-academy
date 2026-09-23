@@ -614,16 +614,16 @@ footer a:hover{color:var(--gold);}
 
 <div class="page-header">
   <div class="container">
-    <h1>À propos de JC Academy</h1>
-    <p>Apprendre, diriger, inspirer — notre mission depuis le premier jour.</p>
+    <h1 id="pcHeroTitre">À propos de JC Academy</h1>
+    <p id="pcHeroSousTitre">Apprendre, diriger, inspirer — notre mission depuis le premier jour.</p>
   </div>
 </div>
 
 <div class="container" style="max-width:800px;">
   <div id="mission" style="padding:20px 0 60px;">
     <span class="tag-label">Notre mission</span>
-    <h2>Rendre la formation certifiante accessible à tous</h2>
-    <p style="font-size:15px;line-height:1.8;">JC Academy est une plateforme de formation en ligne certifiante qui aide chacun à apprendre de nouvelles compétences, obtenir des certifications reconnues et faire progresser sa carrière. Nous croyons qu'un enseignement de qualité, dispensé par des formateurs experts, peut transformer des parcours professionnels partout en Haïti et au-delà.</p>
+    <h2 id="pcMissionTitre">Rendre la formation certifiante accessible à tous</h2>
+    <p style="font-size:15px;line-height:1.8;" id="pcMissionTexte">JC Academy est une plateforme de formation en ligne certifiante qui aide chacun à apprendre de nouvelles compétences, obtenir des certifications reconnues et faire progresser sa carrière. Nous croyons qu'un enseignement de qualité, dispensé par des formateurs experts, peut transformer des parcours professionnels partout en Haïti et au-delà.</p>
     <a href="formateurs.html" class="btn btn-outline" style="margin-top:16px;display:inline-block;">Découvrir nos formateurs &#8594;</a>
   </div>
 </div>
@@ -721,6 +721,17 @@ async function updateNavForSession(session){
   const { data: { session } } = await supabase.auth.getSession();
   await updateNavForSession(session);
 })();
+
+/* ---- Contenu editable defini dans le dashboard admin ---- */
+async function loadPageContent(){
+  const { data } = await supabase.from('page_content').select('blocks').eq('page_key', 'a-propos').maybeSingle();
+  const b = data?.blocks || {};
+  const map = { pcHeroTitre: b.hero_titre, pcHeroSousTitre: b.hero_sous_titre, pcMissionTitre: b.mission_titre, pcMissionTexte: b.mission_texte };
+  Object.entries(map).forEach(([id, value]) => {
+    if (value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+  });
+}
+loadPageContent();
 /* Se met a jour automatiquement si la connexion change dans un AUTRE onglet
    (meme site ouvert sur deux comptes differents, par exemple) */
 supabase.auth.onAuthStateChange((_event, session) => { updateNavForSession(session); });

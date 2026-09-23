@@ -614,8 +614,8 @@ footer a:hover{color:var(--gold);}
 
 <div class="page-header">
   <div class="container">
-    <h1>Nos certificats</h1>
-    <p>Deux parcours, deux niveaux de reconnaissance.</p>
+    <h1 id="pcHeroTitre">Nos certificats</h1>
+    <p id="pcHeroSousTitre">Deux parcours, deux niveaux de reconnaissance.</p>
   </div>
 </div>
 <div class="container" style="max-width:800px;padding:20px 0 60px;">
@@ -734,6 +734,17 @@ document.getElementById('navBurger').addEventListener('click', () => document.ge
   const { data: { session } } = await supabase.auth.getSession();
   await updateNavForSession(session);
 })();
+
+/* ---- Contenu editable defini dans le dashboard admin ---- */
+async function loadPageContent(){
+  const { data } = await supabase.from('page_content').select('blocks').eq('page_key', 'certificats').maybeSingle();
+  const b = data?.blocks || {};
+  const map = { pcHeroTitre: b.hero_titre, pcHeroSousTitre: b.hero_sous_titre };
+  Object.entries(map).forEach(([id, value]) => {
+    if (value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+  });
+}
+loadPageContent();
 /* Se met a jour automatiquement si la connexion change dans un AUTRE onglet
    (meme site ouvert sur deux comptes differents, par exemple) */
 supabase.auth.onAuthStateChange((_event, session) => { updateNavForSession(session); });

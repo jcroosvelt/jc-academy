@@ -676,7 +676,7 @@ footer a:hover{color:var(--gold);}
     <div class="section-head">
       <div>
         <span class="tag-label">Nos programmes</span>
-        <h2>Deux parcours, un même objectif : votre réussite</h2>
+        <h2 id="pcProgrammesTitre">Deux parcours, un même objectif : votre réussite</h2>
       </div>
       <a href="courses.html" class="btn btn-outline">Voir tous les programmes</a>
     </div>
@@ -709,7 +709,7 @@ footer a:hover{color:var(--gold);}
     <div class="section-head">
       <div>
         <span class="tag-label">Nos formateurs</span>
-        <h2>Apprenez auprès d'experts reconnus</h2>
+        <h2 id="pcFormateursTitre">Apprenez auprès d'experts reconnus</h2>
       </div>
     </div>
 
@@ -731,7 +731,7 @@ footer a:hover{color:var(--gold);}
     <div class="section-head">
       <div>
         <span class="tag-label">Actualités</span>
-        <h2>Les dernières nouvelles de JC Academy</h2>
+        <h2 id="pcActualitesTitre">Les dernières nouvelles de JC Academy</h2>
       </div>
     </div>
 
@@ -747,7 +747,7 @@ footer a:hover{color:var(--gold);}
     <div class="section-head">
       <div>
         <span class="tag-label">Galerie</span>
-        <h2>Notre plateforme en images</h2>
+        <h2 id="pcGalerieTitre">Notre plateforme en images</h2>
       </div>
     </div>
 
@@ -772,8 +772,8 @@ footer a:hover{color:var(--gold);}
     <div class="section-head">
       <div>
         <span class="tag-label">Blog</span>
-        <h2>Articles &amp; conseils</h2>
-        <p>Des ressources pour vous aider à progresser dans votre apprentissage et votre carrière.</p>
+        <h2 id="pcBlogTitre">Articles &amp; conseils</h2>
+        <p id="pcBlogSousTitre">Des ressources pour vous aider à progresser dans votre apprentissage et votre carrière.</p>
       </div>
     </div>
 
@@ -789,7 +789,7 @@ footer a:hover{color:var(--gold);}
     <div class="section-head">
       <div>
         <span class="tag-label">Produits numériques</span>
-        <h2>Ebooks, modèles et ressources prêts à l'emploi</h2>
+        <h2 id="pcProduitsTitre">Ebooks, modèles et ressources prêts à l'emploi</h2>
       </div>
       <a href="products.html" class="btn btn-outline">Voir tous les produits</a>
     </div>
@@ -804,8 +804,8 @@ footer a:hover{color:var(--gold);}
 <section class="section">
   <div class="container">
     <div class="cta-banner">
-      <h2>Prêt à faire progresser votre carrière ?</h2>
-      <p>Rejoignez des milliers d'étudiants et commencez votre formation dès aujourd'hui.</p>
+      <h2 id="pcCtaTitre">Prêt à faire progresser votre carrière ?</h2>
+      <p id="pcCtaTexte">Rejoignez des milliers d'étudiants et commencez votre formation dès aujourd'hui.</p>
       <div class="hero-ctas" style="justify-content:center;">
         <a href="register.html" class="btn btn-gold">S'inscrire maintenant</a>
         <a href="courses.html" class="btn btn-outline-white">Voir les cours</a>
@@ -1122,6 +1122,22 @@ loadArticles();
 loadProducts();
 loadGalleryImages();
 loadSiteSettings();
+
+/* ---- Contenu editable (titres/textes definis dans le dashboard admin) ---- */
+async function loadPageContent(){
+  const { data } = await supabase.from('page_content').select('blocks').eq('page_key', 'index').maybeSingle();
+  const b = data?.blocks || {};
+  const map = {
+    pcProgrammesTitre: b.programmes_titre, pcFormateursTitre: b.formateurs_titre,
+    pcActualitesTitre: b.actualites_titre, pcGalerieTitre: b.galerie_titre,
+    pcBlogTitre: b.blog_titre, pcBlogSousTitre: b.blog_sous_titre,
+    pcProduitsTitre: b.produits_titre, pcCtaTitre: b.cta_titre, pcCtaTexte: b.cta_texte,
+  };
+  Object.entries(map).forEach(([id, value]) => {
+    if (value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+  });
+}
+loadPageContent();
 </script>
 </body>
 </html>

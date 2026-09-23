@@ -614,12 +614,12 @@ footer a:hover{color:var(--gold);}
 
 <div class="page-header">
   <div class="container">
-    <h1>Carrières</h1>
-    <p>Rejoignez l'équipe JC Academy.</p>
+    <h1 id="pcHeroTitre">Carrières</h1>
+    <p id="pcHeroSousTitre">Rejoignez l'équipe JC Academy.</p>
   </div>
 </div>
 <div class="container" style="max-width:700px;padding:20px 0 60px;">
-  <p style="font-size:15px;line-height:1.8;">Nous n'avons pas de poste ouvert publiquement pour le moment. Si vous souhaitez rejoindre notre équipe ou collaborer avec JC Academy, écrivez-nous — nous étudions chaque proposition.</p>
+  <p style="font-size:15px;line-height:1.8;" id="pcCorps">Nous n'avons pas de poste ouvert publiquement pour le moment. Si vous souhaitez rejoindre notre équipe ou collaborer avec JC Academy, écrivez-nous — nous étudions chaque proposition.</p>
   <a href="contact.html" class="btn btn-primary" style="margin-top:10px;display:inline-block;">Nous contacter</a>
 </div>
 
@@ -718,6 +718,17 @@ document.getElementById('navBurger').addEventListener('click', () => document.ge
   const { data: { session } } = await supabase.auth.getSession();
   await updateNavForSession(session);
 })();
+
+/* ---- Contenu editable defini dans le dashboard admin ---- */
+async function loadPageContent(){
+  const { data } = await supabase.from('page_content').select('blocks').eq('page_key', 'carrieres').maybeSingle();
+  const b = data?.blocks || {};
+  const map = { pcHeroTitre: b.hero_titre, pcHeroSousTitre: b.hero_sous_titre, pcCorps: b.corps };
+  Object.entries(map).forEach(([id, value]) => {
+    if (value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+  });
+}
+loadPageContent();
 /* Se met a jour automatiquement si la connexion change dans un AUTRE onglet
    (meme site ouvert sur deux comptes differents, par exemple) */
 supabase.auth.onAuthStateChange((_event, session) => { updateNavForSession(session); });

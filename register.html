@@ -662,7 +662,6 @@ footer a:hover{color:var(--gold);}
     <div class="divider">ou</div>
     <div class="social-auth">
       <button type="button" class="social-btn" id="googleAuthBtn">Continuer avec Google</button>
-      <button type="button" class="social-btn" id="facebookAuthBtn">Continuer avec Facebook</button>
     </div>
 
     <p class="auth-switch">Déjà un compte ? <a href="login.html">Se connecter</a></p>
@@ -868,7 +867,6 @@ async function oauthSignIn(provider){
   }
 }
 document.getElementById('googleAuthBtn').addEventListener('click', () => oauthSignIn('google'));
-document.getElementById('facebookAuthBtn').addEventListener('click', () => oauthSignIn('facebook'));
 
 document.querySelectorAll('.pw-toggle').forEach(btn => {
   btn.addEventListener('click', () => {
