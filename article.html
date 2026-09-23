@@ -762,22 +762,16 @@ const wrap = document.getElementById('articleContent');
       <div class="body-text">${escapeHtml(data.body || data.excerpt || '')}</div>
       <div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;">
         <a href="blog.html" class="btn btn-outline">&#8592; Retour au blog</a>
-        <button class="btn btn-primary" id="shareArticleBtn">Partager cet article</button>
+        <button class="btn btn-primary" id="shareArticleBtn" data-share-type="article">Partager cet article</button>
       </div>
     </div>
   `;
 
-  document.getElementById('shareArticleBtn').addEventListener('click', async () => {
-    const shareUrl = `${window.location.origin}/a/${slug}`;
-    if (navigator.share){
-      try { await navigator.share({ title: data.title, url: shareUrl }); } catch(_e){}
-    } else {
-      await navigator.clipboard.writeText(shareUrl);
-      alert('Lien copié : ' + shareUrl);
-    }
-  });
+  document.getElementById('shareArticleBtn').dataset.shareId = slug;
+  document.getElementById('shareArticleBtn').dataset.shareTitle = data.title;
 })();
 </script>
+<script src="share.js"></script>
 
 </body>
 </html>

@@ -638,7 +638,7 @@ footer a:hover{color:var(--gold);}
       <div id="pActionArea">
         <button class="btn btn-primary btn-block" disabled>Chargement...</button>
       </div>
-      <button class="btn btn-outline btn-block" id="shareProductBtn" style="margin-top:10px;">Partager ce produit</button>
+      <button class="btn btn-outline btn-block" id="shareProductBtn" data-share-type="product" style="margin-top:10px;">Partager ce produit</button>
     </div>
   </div>
 </div>
@@ -742,17 +742,7 @@ document.getElementById('navBurger').addEventListener('click', () => document.ge
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get('slug');
-
-document.getElementById('shareProductBtn').addEventListener('click', async () => {
-  const shareUrl = `${window.location.origin}/p/${slug}`;
-  const title = document.getElementById('pTitle').textContent;
-  if (navigator.share){
-    try { await navigator.share({ title, url: shareUrl }); } catch(_e){}
-  } else {
-    await navigator.clipboard.writeText(shareUrl);
-    alert('Lien copié : ' + shareUrl);
-  }
-});
+document.getElementById('shareProductBtn').dataset.shareId = slug;
 let currentSession = null;
 let currentProduct = null;
 
@@ -862,6 +852,7 @@ async function downloadProduct(productId, isFree){
   data.files.forEach(f => window.open(f.url, '_blank'));
 }
 </script>
+<script src="share.js"></script>
 
 </body>
 </html>

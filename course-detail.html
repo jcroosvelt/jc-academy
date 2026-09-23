@@ -641,7 +641,7 @@ footer a:hover{color:var(--gold);}
       <div id="dEnrollArea">
         <button class="btn btn-primary btn-block" id="dEnrollBtn">Chargement...</button>
       </div>
-      <button class="btn btn-outline btn-block" id="shareCourseBtn" style="margin-top:10px;">Partager ce cours</button>
+      <button class="btn btn-outline btn-block" id="shareCourseBtn" data-share-type="course" style="margin-top:10px;">Partager ce cours</button>
       <ul class="sidebar-list">
         <li><span>Type de parcours</span><b id="dTrackText">—</b></li>
         <li><span>Modules</span><b id="dModuleCount">—</b></li>
@@ -790,17 +790,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get('slug');
-
-document.getElementById('shareCourseBtn').addEventListener('click', async () => {
-  const shareUrl = `${window.location.origin}/c/${slug}`;
-  const title = document.getElementById('dTitle').textContent;
-  if (navigator.share){
-    try { await navigator.share({ title, url: shareUrl }); } catch(_e){}
-  } else {
-    await navigator.clipboard.writeText(shareUrl);
-    alert('Lien copié : ' + shareUrl);
-  }
-});
+document.getElementById('shareCourseBtn').dataset.shareId = slug;
 
 let currentSession = null;
 
@@ -998,6 +988,7 @@ function setupEnrollButton(course){
   }
 }
 </script>
+<script src="share.js"></script>
 
 </body>
 </html>
